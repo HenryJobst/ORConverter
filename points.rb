@@ -52,11 +52,43 @@ end
         attr_accessor :time
         attr_accessor :state
         attr_accessor :position
+        attr_accessor :rankValue
+        
+  def getPosition
+    if position.nil? || position.empty?
+      #puts state.to_s
+      if state.to_s == "OK" || state.to_s == "NotCompeting"
+        return "AK"
+      elsif state.to_s == "MisPunch"
+        return "Fehlst"
+      elsif state.to_s == "DidNotFinish" || state.to_s == "SportWithdr"
+        return "Aufg"
+      elsif state.to_s == "DidNotStart" || state.to_s == "Cancelled"
+        return "N Ang"
+      elsif state.to_s == "Disqualified"
+        return "Disq"
+      elsif state.to_s == "OverTime"
+        return "Lim"
+      else
+        return state.to_s
+      end
     end
+    return position.to_s
+  end
+end
 
 class EventClass
   attr_accessor :name
+  attr_accessor :bestTime
   attr_accessor :results
+  
+  def ignoreInNOR
+    if name == "BK" || name == "BL"
+      return true
+    end
+    return false
+  end
+  
 end
 
 class Event
@@ -138,11 +170,11 @@ rootNode.children.each do |child|
             elsif personResultChild.name == "Result"
                 personResultChild.children.each do |resultChild|
                     if resultChild.name == "Time"
-                        personResult.time = resultChild.content
+                        personResult.time = Time.parse(resultChild.content) if !resultChild.content.empty?
                     elsif resultChild.name == "ResultPosition"
-                        personResult.position = resultChild.content
+                        personResult.position = resultChild.content if !resultChild.content.empty?
                     elsif resultChild.name == "CompetitorStatus"
-                        personResult.state = resultChild.content
+                        personResult.state = resultChild.attribute("value")
                     end
                 end    
             end
@@ -153,27 +185,68 @@ rootNode.children.each do |child|
 end
 end
 
+
+def sortByPosition
+  @events.each do |event|
+    event.eventClasses.each do |eventClass|
+      existsAtLeastOnePosition = false
+      eventClass.results.each do |personResult|
+        if !personResult.position.nil? 
+          existsAtLeastOnePosition = true
+        end
+      end
+      if existsAtLeastOnePosition
+        eventClass.results.sort do |a,b|
+          [a.getPosition, a.familyName, a.givenName] <=> [b.getPosition, b.familyName, b.givenName]
+        end
+      else
+        eventClass.results.sort do |a,b|
+          [a.time, a.familyName, a.givenName] <=> [b.time, b.familyName, b.givenName]
+        end
+      end
+    end
+  end
+end
+
+def calculateNORPoints
+  @events.each do |event|
+    event.eventClasses.each do |eventClass|
+      eventClass.bestTime = nil
+      
+      if !eventClass.ignoreInNOR
+        eventClass.results.each do |personResult|
+          next if (personResult.time.nil?)
+          next if (personResult.position.nil?)
+          if eventClass.bestTime.nil? || eventClass.bestTime > personResult.time
+            eventClass.bestTime = personResult.time
+          end
+        end
+      end
+      
+      eventClass.results.each do |personResult|
+        if eventClass.ignoreInNOR
+          personResult.rankValue = 0
+        elsif personResult.time.nil? || personResult.position.nil?
+          personResult.rankValue = 0
+        else
+          personResult.rankValue = calculatePointsNOR(eventClass.bestTime, personResult.time)
+        end
+      end
+    end
+  end
+end
+
 def simpleOutput
     @events.each do |event|
         puts "Event: #{event.name}" if event.name
         event.eventClasses.each do |eventClass|
-            puts "* #{eventClass.name}"
+            puts "\n* #{eventClass.name}"
             eventClass.results.each do |personResult|
-                rank = personResult.position
-                if rank.empty?
-                    if personResult.state == "OK"
-                        rank = "AK"
-                    elsif personResult.state == "MisPunch"
-                        rank = "Fehlst"
-                    elsif personResult.state == "DidNotFinish"
-                        rank = "DNF"
-                    elsif personResult.state == "DidNotStart"
-                        rank = "DNS"
-                    else
-                        rank = personResult.state
-                    end
-                end
-                printf "%4s %-30s %-40s %9s\n" % [rank, "#{personResult.givenName} #{personResult.familyName}", personResult.clubShortName, personResult.time]
+                rank = personResult.getPosition
+                printf "%8s %-30s %-40s %9s %2s\n" % [rank,
+                   "#{personResult.givenName} #{personResult.familyName}", personResult.clubShortName,
+                   !personResult.time.nil? ? personResult.time.strftime("%H:%M:%S") : "",
+                   personResult.rankValue!=0 ? personResult.rankValue.to_s : ""]
             end
         end
     end
@@ -216,6 +289,8 @@ puts "Being verbose" if options[:verbose]
 ARGV.each do|filename|
   # parse results from xml file
   parse(filename)
+  sortByPosition
+  calculateNORPoints
   simpleOutput
 end
 
