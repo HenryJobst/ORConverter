@@ -82,6 +82,19 @@ class PersonResult
     end
     position.to_s
   end
+
+  def get_integer_position
+    if position.nil? || position.empty?
+      return 9999999
+    end
+    position
+  end
+
+  def get_club_name
+    return club_short_name.to_s if !club_short_name.nil?
+    return club_name.to_s if !club_name.nil?
+    club_id.to_s
+  end
 end
 
 class EventClass
@@ -100,6 +113,30 @@ class Event
   attr_accessor :name
   attr_accessor :event_classes
 end
+
+class CupContributor
+  attr_accessor :given_name
+  attr_accessor :family_name
+  attr_accessor :class
+  attr_accessor :points
+end
+
+class ClubEventResult
+  attr_accessor :club_name
+  attr_accessor :points
+  attr_accessor :contributors
+end
+
+class CupEventResult
+  attr_accessor :event_name
+  attr_accessor :club_event_results
+end
+
+class Cup
+  attr_accessor :cup_name
+  attr_accessor :cup_event_results
+end
+
 #####################################
 
 def parse_xml_file(filename)
@@ -118,11 +155,12 @@ def parse_xml_file(filename)
 
   event = Event.new
   event.event_classes = Array.new
+  event.name = nil
   @events.push(event)
 
   root_node.children.each do |child|
     if child.name == "EventId"
-      event.name = child.content
+      event.event_name = child.content
     elsif child.name == "Event"
       event.name = child.content
     elsif child.name == "ClassResult"
@@ -164,7 +202,7 @@ def parse_xml_file(filename)
                 end
               end
             elsif person_result_child.name == "ClubId"
-              person_result.club = person_result_child.content
+              person_result.club_id = person_result_child.content
             elsif person_result_child.name == "Result"
               person_result_child.children.each do |resultChild|
                 if resultChild.name == "Time"
@@ -181,24 +219,16 @@ def parse_xml_file(filename)
       end
     end
   end
-end
 
+  event.name = filename if event.name.nil?
+
+end
 
 def sort_by_position
   @events.each do |event|
     event.event_classes.each do |event_class|
-      valid_position_exists = false
-      event_class.results.each do |person_result|
-        valid_position_exists = true unless person_result.position.nil?
-      end
-      if valid_position_exists
-        event_class.results.sort do |a, b|
-          [a.get_position, a.family_name, a.given_name] <=> [b.get_position, b.family_name, b.given_name]
-        end
-      else
-        event_class.results.sort do |a, b|
-          [a.time, a.family_name, a.given_name] <=> [b.time, b.family_name, b.given_name]
-        end
+      event_class.results.sort! do |a, b|
+        [a.get_integer_position.to_i, a.time.to_s, a.family_name, a.given_name] <=> [b.get_integer_position.to_i, b.time.to_s, b.family_name, b.given_name]
       end
     end
   end
@@ -249,6 +279,62 @@ def simple_output
   end
 end
 
+def calculate_nebel_cup
+
+  @cup.cup_event_results = Hash.new
+
+  @events.each do |event|
+
+    # create & initialize cup event result
+    cup_event_result = CupEventResult.new
+    cup_event_result.club_event_results = Hash.new
+    cup_event_result.event_name = event.name
+    @cup.cup_event_results.store(cup_event_result.event_name, cup_event_result)
+
+    event.event_classes.each do |event_class|
+        event_class.results.each do |person_result|
+          club_name = person_result.get_club_name
+          next if club_name.match("Volkssport")
+          club_event_result = cup_event_result.club_event_results[club_name]
+          if club_event_result.nil?
+            # create & store
+            club_event_result = ClubEventResult.new
+            club_event_result.contributors = Hash.new
+            club_event_result.club_name = club_name
+            club_event_result.points = 0
+            cup_event_result.club_event_results.store(club_event_result.club_name, club_event_result)
+          end
+
+          contributor = club_event_result.contributors[event_class.name]
+          if contributor.nil?
+            # add contributor
+            contributor = CupContributor.new
+            contributor.given_name = person_result.given_name
+            contributor.family_name = person_result.family_name
+            contributor.class = event_class.name
+            contributor.points = person_result.rank_value
+            club_event_result.contributors.store(contributor.class, contributor)
+            club_event_result.points += contributor.points
+          end
+        end
+    end
+  end
+end
+
+def simple_output_cup
+  puts "---------"
+  @cup.cup_event_results.each_value do |event_result|
+    puts event_result.event_name
+    clubs_results = event_result.club_event_results.values
+    clubs_results.sort! do |a, b|
+      [-a.points, a.club_name] <=> [-b.points, b.club_name]
+    end
+    clubs_results.each do |club_event_result|
+      puts "#{club_event_result.club_name} -> #{club_event_result.points}"
+    end
+  end
+end
+
 # This hash will hold all of the options
 # parsed from the command-line by
 # OptionParser.
@@ -286,9 +372,15 @@ puts "Being verbose" if options[:verbose]
 
 ARGV.each do |filename|
   parse_xml_file(filename)
-  sort_by_position
-  calculate_nor_points
-  simple_output
 end
 
+sort_by_position
+calculate_nor_points
+simple_output
+
+# create & initialize cup
+@cup = Cup.new
+
+calculate_nebel_cup
+simple_output_cup
 
