@@ -2,59 +2,66 @@ require 'time'
 require 'optparse'
 require 'nokogiri'
 
-def mpl(t, f)
-  sec, min, hour, day, month, year, wday, yday, isdst, zone = t.to_a
-  fsec = sec + min*60 + hour*3600
-  fsec = (fsec * f).to_i
-  fhour = (fsec / 3600).to_i
-  fsec = (fsec-fhour*3600).to_i
-  fmin =  (fsec / 60).to_i
-  fsec = (fsec-fmin*60).to_i
-  Time.local(fsec,fmin,fhour,day,month,year,wday,yday,isdst,zone)
+# @param [Time] base_time
+# @param [Float] factor
+# @return [Time]
+def multiply_time(base_time, factor)
+  sec, min, hour, day, month, year, wday, yday, isdst, zone = base_time.to_a
+  f_sec = sec + min*60 + hour*3600
+  f_sec = (f_sec * factor).to_i
+  f_hour = (f_sec / 3600).to_i
+  f_sec = (f_sec-f_hour*3600).to_i
+  f_min = (f_sec / 60).to_i
+  f_sec = (f_sec-f_min*60).to_i
+  Time.local(f_sec, f_min, f_hour, day, month, year, wday, yday, isdst, zone)
 end
 
-def calculatePointsNOR(bestTime, currentTime)
-  if currentTime <= bestTime
-    return 12
-  elsif currentTime <= mpl(bestTime, 1.05)
-    return 11
-  elsif currentTime <= mpl(bestTime, 1.10)
-    return 10
-  elsif currentTime <= mpl(bestTime, 1.15)
-    return 9
-  elsif currentTime <= mpl(bestTime, 1.20)
-    return 8
-  elsif currentTime <= mpl(bestTime, 1.25)
-    return 7
-  elsif currentTime <= mpl(bestTime, 1.35)
-    return 6
-  elsif currentTime <= mpl(bestTime, 1.50)
-    return 5
-  elsif currentTime <= mpl(bestTime, 1.70)
-    return 4
-  elsif currentTime <= mpl(bestTime, 2.0)
-    return 3
-  elsif currentTime <= mpl(bestTime, 3.0)
-    return 2
+# @param [Time] current_time
+# @param [Time] best_time
+# @return [Integer]
+def calculate_points_nor(best_time, current_time)
+  if current_time <= best_time
+    12
+  elsif current_time <= multiply_time(best_time, 1.05)
+    11
+  elsif current_time <= multiply_time(best_time, 1.10)
+    10
+  elsif current_time <= multiply_time(best_time, 1.15)
+    9
+  elsif current_time <= multiply_time(best_time, 1.20)
+    8
+  elsif current_time <= multiply_time(best_time, 1.25)
+    7
+  elsif current_time <= multiply_time(best_time, 1.35)
+    6
+  elsif current_time <= multiply_time(best_time, 1.50)
+    5
+  elsif current_time <= multiply_time(best_time, 1.70)
+    4
+  elsif current_time <= multiply_time(best_time, 2.0)
+    3
+  elsif current_time <= multiply_time(best_time, 3.0)
+    2
   else
-    return 1
+    1
   end
 end
 
 # Classes ###########################
- class PersonResult
-        attr_accessor :personId
-        attr_accessor :familyName
-        attr_accessor :givenName
-        attr_accessor :clubId
-        attr_accessor :clubName
-        attr_accessor :clubShortName
-        attr_accessor :time
-        attr_accessor :state
-        attr_accessor :position
-        attr_accessor :rankValue
-        
-  def getPosition
+class PersonResult
+
+  attr_accessor :person_id
+  attr_accessor :family_name
+  attr_accessor :given_name
+  attr_accessor :club_id
+  attr_accessor :club_name
+  attr_accessor :club_short_name
+  attr_accessor :time
+  attr_accessor :state
+  attr_accessor :position
+  attr_accessor :rank_value
+
+  def get_position
     if position.nil? || position.empty?
       #puts state.to_s
       if state.to_s == "OK" || state.to_s == "NotCompeting"
@@ -73,203 +80,194 @@ end
         return state.to_s
       end
     end
-    return position.to_s
+    position.to_s
   end
 end
 
 class EventClass
   attr_accessor :name
-  attr_accessor :bestTime
+  attr_accessor :best_time
   attr_accessor :results
-  
-  def ignoreInNOR
-    if name == "BK" || name == "BL"
-      return true
-    end
-    return false
+
+  def ignore_in_nor
+    return true if name == "BK" || name == "BL"
+    false
   end
-  
+
 end
 
 class Event
   attr_accessor :name
-  attr_accessor :eventClasses
+  attr_accessor :event_classes
 end
 #####################################
 
-def parse(filename)
+def parse_xml_file(filename)
   puts "Process file: #{filename}"
 
   doc = Nokogiri::XML(IO.read(filename))
-  
+
   return if doc.nil?
-  
-  #validateResult = doc.validate
-  #if !validateResult.nil?
-  #  puts "The file #{filename} don't fit against it's DTD."
-  #  validateResult.each do | line |
-  #    puts line
-  #  end
-  #end
- rootNode = doc.root
- 
- if rootNode.name != "ResultList"
-   puts "The file #{filename} is not a valid result list."
-   return
- end
- 
+
+  root_node = doc.root
+
+  if root_node.name != "ResultList"
+    puts "The file #{filename} is not a valid result list."
+    return
+  end
+
   event = Event.new
-  event.eventClasses = Array.new
+  event.event_classes = Array.new
   @events.push(event)
 
-rootNode.children.each do |child|
-  if child.name == "EventId"
-    event.name = child.content
-  elsif child.name == "Event"
-    event.name = child.content
-  elsif child.name == "ClassResult"
-    classResult = EventClass.new
-    classResult.results = Array.new
-    event.eventClasses.push(classResult)
-    child.children.each do |classChild|
-      if classChild.name == "ClassId"
-        classResult.name = classChild.content
-      elsif classChild.name == "ClassShortName"
-        classResult.name = classChild.content
-      elsif classChild.name == "EventClass"
-        classResult.name = classChild.content
-      elsif classChild.name == "PersonResult"
-        personResult = PersonResult.new
-        classResult.results.push(personResult)
-        classChild.children.each do |personResultChild|
-            if personResultChild.name == "Person"
-                personResultChild.children.each do |personChild|
-                    if personChild.name == "PersonName"
-                        family = personChild.search("Family").first
-                        personResult.familyName = family.content if family
-                        given = personChild.search("Given").first
-                        personResult.givenName = given.content if given
-                    elsif personChild.name == "PersonId"
-                        personResult.personId = personChild.content
-                    end
+  root_node.children.each do |child|
+    if child.name == "EventId"
+      event.name = child.content
+    elsif child.name == "Event"
+      event.name = child.content
+    elsif child.name == "ClassResult"
+      class_result = EventClass.new
+      class_result.results = Array.new
+      event.event_classes.push(class_result)
+      child.children.each do |class_child|
+        if class_child.name == "ClassId"
+          class_result.name = class_child.content
+        elsif class_child.name == "ClassShortName"
+          class_result.name = class_child.content
+        elsif class_child.name == "EventClass"
+          class_result.name = class_child.content
+        elsif class_child.name == "PersonResult"
+          person_result = PersonResult.new
+          class_result.results.push(person_result)
+          class_child.children.each do |person_result_child|
+            if person_result_child.name == "Person"
+              person_result_child.children.each do |personChild|
+                if personChild.name == "PersonName"
+                  family = personChild.search("Family").first
+                  person_result.family_name = family.content if family
+                  given = personChild.search("Given").first
+                  person_result.given_name = given.content if given
+                elsif personChild.name == "PersonId"
+                  person_result.person_id = personChild.content
                 end
-            elsif personResultChild.name == "PersonId"
-                personResult.personId = personResultChild.content
-            elsif personResultChild.name == "Club"
-                 personResultChild.children.each do |clubChild|
-                     if clubChild.name == "ClubId"
-                        personResult.clubId = clubChild.content
-                     elsif clubChild.name == "Name"
-                        personResult.clubName = clubChild.content
-                     elsif clubChild.name == "ShortName"
-                        personResult.clubShortName = clubChild.content
-                     end
-                 end
-            elsif personResultChild.name == "ClubId"
-                personResult.club = personResultChild.content
-            elsif personResultChild.name == "Result"
-                personResultChild.children.each do |resultChild|
-                    if resultChild.name == "Time"
-                        personResult.time = Time.parse(resultChild.content) if !resultChild.content.empty?
-                    elsif resultChild.name == "ResultPosition"
-                        personResult.position = resultChild.content if !resultChild.content.empty?
-                    elsif resultChild.name == "CompetitorStatus"
-                        personResult.state = resultChild.attribute("value")
-                    end
-                end    
+              end
+            elsif person_result_child.name == "PersonId"
+              person_result.person_id = person_result_child.content
+            elsif person_result_child.name == "Club"
+              person_result_child.children.each do |clubChild|
+                if clubChild.name == "ClubId"
+                  person_result.club_id = clubChild.content
+                elsif clubChild.name == "Name"
+                  person_result.club_name = clubChild.content
+                elsif clubChild.name == "ShortName"
+                  person_result.club_short_name = clubChild.content
+                end
+              end
+            elsif person_result_child.name == "ClubId"
+              person_result.club = person_result_child.content
+            elsif person_result_child.name == "Result"
+              person_result_child.children.each do |resultChild|
+                if resultChild.name == "Time"
+                  person_result.time = Time.parse(resultChild.content) if !resultChild.content.empty?
+                elsif resultChild.name == "ResultPosition"
+                  person_result.position = resultChild.content if !resultChild.content.empty?
+                elsif resultChild.name == "CompetitorStatus"
+                  person_result.state = resultChild.attribute("value")
+                end
+              end
             end
-        end
-      end
-    end
-  end
-end
-end
-
-
-def sortByPosition
-  @events.each do |event|
-    event.eventClasses.each do |eventClass|
-      existsAtLeastOnePosition = false
-      eventClass.results.each do |personResult|
-        if !personResult.position.nil? 
-          existsAtLeastOnePosition = true
-        end
-      end
-      if existsAtLeastOnePosition
-        eventClass.results.sort do |a,b|
-          [a.getPosition, a.familyName, a.givenName] <=> [b.getPosition, b.familyName, b.givenName]
-        end
-      else
-        eventClass.results.sort do |a,b|
-          [a.time, a.familyName, a.givenName] <=> [b.time, b.familyName, b.givenName]
-        end
-      end
-    end
-  end
-end
-
-def calculateNORPoints
-  @events.each do |event|
-    event.eventClasses.each do |eventClass|
-      eventClass.bestTime = nil
-      
-      if !eventClass.ignoreInNOR
-        eventClass.results.each do |personResult|
-          next if (personResult.time.nil?)
-          next if (personResult.position.nil?)
-          if eventClass.bestTime.nil? || eventClass.bestTime > personResult.time
-            eventClass.bestTime = personResult.time
           end
         end
       end
-      
-      eventClass.results.each do |personResult|
-        if eventClass.ignoreInNOR
-          personResult.rankValue = 0
-        elsif personResult.time.nil? || personResult.position.nil?
-          personResult.rankValue = 0
-        else
-          personResult.rankValue = calculatePointsNOR(eventClass.bestTime, personResult.time)
+    end
+  end
+end
+
+
+def sort_by_position
+  @events.each do |event|
+    event.event_classes.each do |event_class|
+      valid_position_exists = false
+      event_class.results.each do |person_result|
+        valid_position_exists = true unless person_result.position.nil?
+      end
+      if valid_position_exists
+        event_class.results.sort do |a, b|
+          [a.get_position, a.family_name, a.given_name] <=> [b.get_position, b.family_name, b.given_name]
+        end
+      else
+        event_class.results.sort do |a, b|
+          [a.time, a.family_name, a.given_name] <=> [b.time, b.family_name, b.given_name]
         end
       end
     end
   end
 end
 
-def simpleOutput
-    @events.each do |event|
-        puts "Event: #{event.name}" if event.name
-        event.eventClasses.each do |eventClass|
-            puts "\n* #{eventClass.name}"
-            eventClass.results.each do |personResult|
-                rank = personResult.getPosition
-                printf "%8s %-30s %-40s %9s %2s\n" % [rank,
-                   "#{personResult.givenName} #{personResult.familyName}", personResult.clubShortName,
-                   !personResult.time.nil? ? personResult.time.strftime("%H:%M:%S") : "",
-                   personResult.rankValue!=0 ? personResult.rankValue.to_s : ""]
-            end
+def calculate_nor_points
+  @events.each do |event|
+    event.event_classes.each do |event_class|
+      event_class.best_time = nil
+
+      unless event_class.ignore_in_nor
+        event_class.results.each do |person_result|
+          next if (person_result.time.nil?)
+          next if (person_result.position.nil?)
+          if event_class.best_time.nil? || event_class.best_time > person_result.time
+            event_class.best_time = person_result.time
+          end
         end
+      end
+
+      event_class.results.each do |person_result|
+        if event_class.ignore_in_nor
+          person_result.rank_value = 0
+        elsif person_result.time.nil? || person_result.position.nil?
+          person_result.rank_value = 0
+        else
+          person_result.rank_value = calculate_points_nor(event_class.best_time, person_result.time)
+        end
+      end
     end
+  end
 end
+
+def simple_output
+  @events.each do |event|
+    puts "Event: #{event.name}" if event.name
+    event.event_classes.each do |event_class|
+      puts "\n* #{event_class.name}"
+      event_class.results.each do |person_result|
+        rank = person_result.get_position
+        printf "%8s %-30s %-40s %9s %2s\n" % [rank,
+                                              "#{person_result.given_name} #{person_result.family_name}",
+                                              person_result.club_short_name,
+                                              !person_result.time.nil? ? person_result.time.strftime("%H:%M:%S") : "",
+                                              person_result.rank_value!=0 ? person_result.rank_value.to_s : ""]
+      end
+    end
+  end
+end
+
 # This hash will hold all of the options
 # parsed from the command-line by
 # OptionParser.
 options = {}
 
-optparse = OptionParser.new do|opts|
+optparse = OptionParser.new do |opts|
 # Set a banner, displayed at the top
 # of the help screen.
   opts.banner = "Usage: points.rb [options] file1 file2 ..."
 
   # Define the options, and what they do
   options[:verbose] = false
-  opts.on( '-v', '--verbose', 'Output more information' ) do
+  opts.on('-v', '--verbose', 'Output more information') do
     options[:verbose] = true
   end
 
   # This displays the help screen, all programs are
   # assumed to have this option.
-  opts.on( '-h', '--help', 'Display this screen' ) do
+  opts.on('-h', '--help', 'Display this screen') do
     puts opts
     exit
   end
@@ -286,22 +284,11 @@ puts "Being verbose" if options[:verbose]
 
 @events = Array.new
 
-ARGV.each do|filename|
-  # parse results from xml file
-  parse(filename)
-  sortByPosition
-  calculateNORPoints
-  simpleOutput
+ARGV.each do |filename|
+  parse_xml_file(filename)
+  sort_by_position
+  calculate_nor_points
+  simple_output
 end
 
-# calculate points for every competitor
-# calculate points for cup etc.
-# export results or cup list
-
-#bestTime="72:07"
-#currentTime="80:23"
-
-#points = calculatePointsNOR(Time.parse(bestTime), Time.parse(currentTime))
-
-#puts "BestTime: #{bestTime}, CurrentTime: #{currentTime}, Points: #{points}"
 
