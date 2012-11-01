@@ -66,6 +66,10 @@ class PersonResult
   attr_accessor :position
   attr_accessor :rank_value
 
+  def full_name
+    "#{given_name} #{family_name}"
+  end
+
   def get_position
     if position.nil? || position.empty?
       #puts state.to_s
@@ -108,7 +112,7 @@ class EventClass
   attr_accessor :results
 
   def ignore_in_nor
-    return true if name == "BK" || name == "BL"
+    #return true if name == "BK" || name == "BL"
     false
   end
 
@@ -124,6 +128,11 @@ class CupContributor
   attr_accessor :family_name
   attr_accessor :class
   attr_accessor :points
+
+  def full_name
+    "#{given_name} #{family_name}"
+  end
+
 end
 
 class ClubEventResult
@@ -138,8 +147,8 @@ class CupEventResult
 end
 
 class Cup
-  attr_accessor :cup_name
   attr_accessor :cup_event_results
+  attr_accessor :cup_final_result
 end
 
 #####################################
@@ -267,7 +276,7 @@ def calculate_nor_points
   end
 end
 
-def simple_output
+def simple_output(dont_show_nor_points)
   @events.each do |event|
     puts "\n---------------------------------------"
     puts "Event: #{event.name}" if event.name
@@ -275,17 +284,19 @@ def simple_output
       puts "\n* #{event_class.name}"
       event_class.results.each do |person_result|
         rank = person_result.get_position
-        printf "%8s %-30s %-40s %9s %2s\n" % [rank,
-                                              "#{person_result.given_name} #{person_result.family_name}",
+        printf "%8s %-40s %-40s %9s %2s\n" % [rank,
+                                              person_result.full_name,
                                               person_result.club_short_name,
                                               !person_result.time.nil? ? person_result.time.strftime("%H:%M:%S") : "",
-                                              person_result.rank_value!=0 ? person_result.rank_value.to_s : ""]
+                                              person_result.rank_value!=0 ?
+                                                  dont_show_nor_points ? "" : person_result.rank_value.to_s
+                                              : ""]
       end
     end
   end
 end
 
-def calculate_nebel_cup
+def calculate_fog_cup(cup_name)
 
   @cup.cup_event_results = Array.new
 
@@ -297,41 +308,83 @@ def calculate_nebel_cup
     cup_event_result.event_name = event.name
 
     event.event_classes.each do |event_class|
-        event_class.results.each do |person_result|
-          club_name = person_result.get_club_name
-          next if club_name.match("Volkssport")
-          club_event_result = cup_event_result.club_event_results[club_name.to_sym]
-          if club_event_result.nil?
-            # create & store
-            club_event_result = ClubEventResult.new
-            club_event_result.contributors = Hash.new
-            club_event_result.club_name = club_name
-            club_event_result.points = 0
-            cup_event_result.club_event_results.store(club_event_result.club_name.to_sym, club_event_result)
-          end
-
-          next if person_result.rank_value == 0
-
-          contributor = club_event_result.contributors[event_class.name.to_sym]
-          if contributor.nil?
-            # add contributor
-            contributor = CupContributor.new
-            contributor.given_name = person_result.given_name
-            contributor.family_name = person_result.family_name
-            contributor.class = event_class.name
-            contributor.points = person_result.rank_value
-            club_event_result.contributors.store(contributor.class.to_sym, contributor)
-            club_event_result.points += contributor.points
-          end
+      event_class.results.each do |person_result|
+        club_name = person_result.get_club_name
+        next if club_name.match("Volkssport")
+        club_event_result = cup_event_result.club_event_results[club_name.to_sym]
+        if club_event_result.nil?
+          # create & store
+          club_event_result = ClubEventResult.new
+          club_event_result.contributors = Hash.new
+          club_event_result.club_name = club_name
+          club_event_result.points = 0
+          cup_event_result.club_event_results.store(club_event_result.club_name.to_sym, club_event_result)
         end
+
+        next if person_result.rank_value == 0
+
+        contributor = club_event_result.contributors[event_class.name.to_sym]
+        if contributor.nil?
+          # add contributor
+          contributor = CupContributor.new
+          contributor.given_name = person_result.given_name
+          contributor.family_name = person_result.family_name
+          contributor.class = event_class.name
+          contributor.points = person_result.rank_value
+          club_event_result.contributors.store(contributor.class.to_sym, contributor)
+          club_event_result.points += contributor.points
+        end
+      end
     end
 
     @cup.cup_event_results.push(cup_event_result)
 
   end
+
+  # create & initialize cup final result
+  cup_final_result = CupEventResult.new
+  cup_final_result.club_event_results = Hash.new
+  cup_final_result.event_name = cup_name
+  @cup.cup_final_result = cup_final_result
+
+  # Merge event results
+  @cup.cup_event_results.each do |event_result|
+
+    event_result.club_event_results.values.each do |club_event_result|
+
+      club_final_result = cup_final_result.club_event_results[club_event_result.club_name.to_sym]
+
+      if club_final_result.nil?
+        # create & store
+        club_final_result = ClubEventResult.new
+        club_final_result.contributors = Hash.new
+        club_final_result.club_name = club_event_result.club_name
+        club_final_result.points = club_event_result.points
+        cup_final_result.club_event_results.store(club_final_result.club_name.to_sym, club_final_result)
+      else
+        club_final_result.points += club_event_result.points
+      end
+
+      club_event_result.contributors.values.each do |contributor|
+        final_contributor = club_final_result.contributors[contributor.full_name.to_sym]
+        if final_contributor.nil?
+          # add contributor
+          final_contributor = CupContributor.new
+          final_contributor.given_name = contributor.given_name
+          final_contributor.family_name = contributor.family_name
+          final_contributor.class = contributor.class
+          final_contributor.points = contributor.points
+          club_final_result.contributors.store(contributor.full_name.to_sym, final_contributor)
+        else
+          final_contributor.points += contributor.points
+        end
+      end
+    end
+  end
+
 end
 
-def simple_output_cup_event(event_result)
+def simple_output_cup_event(event_result, with_class)
   puts "\n---------------------------------------"
   puts "Event name: #{event_result.event_name}"
   puts "\n"
@@ -343,20 +396,28 @@ def simple_output_cup_event(event_result)
     puts "\n#{club_event_result.club_name} -> #{club_event_result.points}"
     puts "\n"
     contributors = club_event_result.contributors.values.sort do |a, b|
-      [-a.points.to_i, a.class.to_s] <=> [-b.points.to_i, b.class.to_s]
+      [-a.points.to_i, a.full_name.to_s] <=> [-b.points.to_i, b.full_name.to_s]
     end
     contributors.each do |contributor|
-      printf "  %5s %s %d\n" % [contributor.class.to_s,
-                                "#{contributor.given_name} #{contributor.family_name}",
-                                contributor.points.to_i]
+      if with_class
+        printf " %8s %s %d\n" % [contributor.class.to_s,
+                                 contributor.full_name,
+                                 contributor.points.to_i]
+      else
+        printf " %s %d\n" % [contributor.full_name,
+                             contributor.points.to_i]
+      end
     end
   end
 end
 
 def simple_output_cup
   @cup.cup_event_results.each do |event_result|
-    simple_output_cup_event(event_result)
+    simple_output_cup_event(event_result, true)
   end
+
+  simple_output_cup_event(@cup.cup_final_result, false)
+
 end
 
 # This hash will hold all of the options
@@ -365,9 +426,25 @@ end
 options = {}
 
 optparse = OptionParser.new do |opts|
-# Set a banner, displayed at the top
-# of the help screen.
-  opts.banner = "Usage: points.rb [options] file1 file2 ..."
+
+  # Set a banner, displayed at the top
+  # of the help screen.
+  opts.banner = "Usage: ORConverter.[rb|exe] [options] file1 file2 ..."
+
+  # calculate and present fog cup result
+  options[:fog_cup] = nil
+  opts.on('-f', '--fog_cup [cupname]', 'calculate fog cup results with optional cup name') do |f|
+    options[:fog_cup] = f || "Cup"
+  end
+
+  puts options[:fog_cup].to_s
+
+
+  # Disable show of NOR-points
+  options[:dont_show_nor_points] = false
+  opts.on('--dont_show_nor_points', "Don't show NOR points") do
+    options[:dont_show_nor_points] = true
+  end
 
   # Define the options, and what they do
   options[:verbose] = false
@@ -400,11 +477,14 @@ end
 
 sort_by_position
 calculate_nor_points
-simple_output
+simple_output(options[:dont_show_nor_points])
 
-# create & initialize cup
-@cup = Cup.new
+if !options[:fog_cup].nil?
+  # create & initialize cup
+  @cup = Cup.new
 
-calculate_nebel_cup
-simple_output_cup
+  calculate_fog_cup(options[:fog_cup])
+
+  simple_output_cup
+end
 
