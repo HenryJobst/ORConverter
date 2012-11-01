@@ -1,6 +1,11 @@
-require 'time'
-require 'optparse'
-require 'nokogiri'
+#!/usr/bin/env ruby
+require "rubygems"
+require "bundler/setup"
+
+require "time"
+require "nokogiri"
+require "optparse"
+
 
 # @param [Time] base_time
 # @param [Float] factor
@@ -140,7 +145,7 @@ end
 #####################################
 
 def parse_xml_file(filename)
-  puts "Process file: #{filename}"
+  puts "\nProcess file: #{filename}"
 
   doc = Nokogiri::XML(IO.read(filename))
 
@@ -264,6 +269,7 @@ end
 
 def simple_output
   @events.each do |event|
+    puts "\n---------------------------------------"
     puts "Event: #{event.name}" if event.name
     event.event_classes.each do |event_class|
       puts "\n* #{event_class.name}"
@@ -281,7 +287,7 @@ end
 
 def calculate_nebel_cup
 
-  @cup.cup_event_results = Hash.new
+  @cup.cup_event_results = Array.new
 
   @events.each do |event|
 
@@ -289,23 +295,24 @@ def calculate_nebel_cup
     cup_event_result = CupEventResult.new
     cup_event_result.club_event_results = Hash.new
     cup_event_result.event_name = event.name
-    @cup.cup_event_results.store(cup_event_result.event_name, cup_event_result)
 
     event.event_classes.each do |event_class|
         event_class.results.each do |person_result|
           club_name = person_result.get_club_name
           next if club_name.match("Volkssport")
-          club_event_result = cup_event_result.club_event_results[club_name]
+          club_event_result = cup_event_result.club_event_results[club_name.to_sym]
           if club_event_result.nil?
             # create & store
             club_event_result = ClubEventResult.new
             club_event_result.contributors = Hash.new
             club_event_result.club_name = club_name
             club_event_result.points = 0
-            cup_event_result.club_event_results.store(club_event_result.club_name, club_event_result)
+            cup_event_result.club_event_results.store(club_event_result.club_name.to_sym, club_event_result)
           end
 
-          contributor = club_event_result.contributors[event_class.name]
+          next if person_result.rank_value == 0
+
+          contributor = club_event_result.contributors[event_class.name.to_sym]
           if contributor.nil?
             # add contributor
             contributor = CupContributor.new
@@ -313,25 +320,42 @@ def calculate_nebel_cup
             contributor.family_name = person_result.family_name
             contributor.class = event_class.name
             contributor.points = person_result.rank_value
-            club_event_result.contributors.store(contributor.class, contributor)
+            club_event_result.contributors.store(contributor.class.to_sym, contributor)
             club_event_result.points += contributor.points
           end
         end
+    end
+
+    @cup.cup_event_results.push(cup_event_result)
+
+  end
+end
+
+def simple_output_cup_event(event_result)
+  puts "\n---------------------------------------"
+  puts "Event name: #{event_result.event_name}"
+  puts "\n"
+  clubs_results = event_result.club_event_results.values
+  clubs_results.sort! do |a, b|
+    [-a.points, a.club_name] <=> [-b.points, b.club_name]
+  end
+  clubs_results.each do |club_event_result|
+    puts "\n#{club_event_result.club_name} -> #{club_event_result.points}"
+    puts "\n"
+    contributors = club_event_result.contributors.values.sort do |a, b|
+      [-a.points.to_i, a.class.to_s] <=> [-b.points.to_i, b.class.to_s]
+    end
+    contributors.each do |contributor|
+      printf "  %5s %s %d\n" % [contributor.class.to_s,
+                                "#{contributor.given_name} #{contributor.family_name}",
+                                contributor.points.to_i]
     end
   end
 end
 
 def simple_output_cup
-  puts "---------"
-  @cup.cup_event_results.each_value do |event_result|
-    puts event_result.event_name
-    clubs_results = event_result.club_event_results.values
-    clubs_results.sort! do |a, b|
-      [-a.points, a.club_name] <=> [-b.points, b.club_name]
-    end
-    clubs_results.each do |club_event_result|
-      puts "#{club_event_result.club_name} -> #{club_event_result.points}"
-    end
+  @cup.cup_event_results.each do |event_result|
+    simple_output_cup_event(event_result)
   end
 end
 
