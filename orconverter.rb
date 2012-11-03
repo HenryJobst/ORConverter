@@ -6,13 +6,15 @@ require "time"
 require "nokogiri"
 require "optparse"
 
-#load "iof_result_list_reader.rb"
-load "fog_cup.rb"
+require_relative "iof_result_list_reader.rb"
+require_relative "fog_cup.rb"
 
 # This hash will hold all of the options
 # parsed from the command-line by
 # OptionParser.
 options = {}
+
+actual_year = Time.now.strftime("%Y")
 
 optparse = OptionParser.new do |opts|
 
@@ -23,7 +25,7 @@ optparse = OptionParser.new do |opts|
   # calculate and present fog cup result
   options[:fog_cup] = nil
   opts.on('-f', '--fog_cup [cupname]', 'calculate fog cup results with optional cup name') do |f|
-    options[:fog_cup] = f || "Cup"
+    options[:fog_cup] = f || "Nebel-Cup #{actual_year}"
   end
 
   puts options[:fog_cup].to_s
@@ -56,19 +58,12 @@ end
 # the options. What's left is the list of files to resize.
 optparse.parse!
 
-puts "Being verbose" if options[:verbose]
-
-iof_result_list_reader = IofResultListReader.new
-
-ARGV.each do |filename|
-  iof_result_list_reader.parse_xml_file(filename)
-end
-
-iof_result_list_reader.sort_by_position
-iof_result_list_reader.calculate_nor_points
-iof_result_list_reader.simple_output(options[:dont_show_nor_points])
+iof_result_list_reader = IofResultListReader.new(ARGV)
+iof_result_list_reader.simple_output(options[:dont_show_nor_points]) if options[:verbose]
 
 if !options[:fog_cup].nil?
-  fogCup = FogCup.new(options[:fog_cup], iof_result_list_reader.events)
-  fogCup.simple_output_cup
+  cup_name = options[:fog_cup]
+  fogCup = FogCup.new(cup_name, actual_year, iof_result_list_reader.events)
+  fogCup.simple_output_cup if options[:verbose]
+  fogCup.erwins_original_html_output()
 end
