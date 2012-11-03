@@ -161,7 +161,7 @@ class FogCup
     simple_output_cup_event(@cup.cup_final_result, false)
   end
 
-  def erwins_original_html_output
+  def erwins_original_html_output(external_resources)
     builder = Nokogiri::HTML::Builder.new do |doc|
       doc.html {
         doc.head() {
@@ -172,7 +172,9 @@ class FogCup
           doc.table(:border => "1", :style => 'width:950px;text-align:center;') {
             doc.tr {
               doc.td(:style => "vertical-align:top; text-align:center; vertical-align:middle; width:50%;font:x-large arial;") {
-                doc.img(:src => "http://kolv.de/bilder/nebelcup_logo.jpg", :alt => "Nebel-Cup", :title => "Nebel-Cup")
+                img_link = "./resources/nebelcup_logo.jpg"
+                img_link = "http://www.kolv.de/bilder/nebelcup_logo.jpg" if external_resources
+                doc.img(:src => img_link, :alt => "#{@cup_name}", :title => "#{@cup_name}")
                 doc.br()
                 doc.text(@actual_year)
                 doc.br()
@@ -184,7 +186,7 @@ class FogCup
                     insert_table_header(doc)
                     insert_table_results(doc,
                                          sort_club_results(@cup.cup_final_result.club_event_results.values),
-                                         false)
+                                         false, external_resources)
                   }
                 }
               }
@@ -198,7 +200,7 @@ class FogCup
                     insert_table_header(doc)
                     insert_table_results(doc,
                                          sort_club_results(@cup.cup_event_results.fetch(0).club_event_results.values),
-                                         true) if !@cup.cup_event_results.empty?
+                                         true, external_resources) if !@cup.cup_event_results.empty?
                   }
                 }
               }
@@ -210,7 +212,7 @@ class FogCup
                     insert_table_header(doc)
                     insert_table_results(doc,
                                          sort_club_results(@cup.cup_event_results.fetch(1).club_event_results.values),
-                                         true) if @cup.cup_event_results.size > 1
+                                         true, external_resources) if @cup.cup_event_results.size > 1
                   }
                 }
               }
@@ -233,7 +235,7 @@ class FogCup
     sorted_club_results
   end
 
-  def insert_table_results(doc, club_results, simple)
+  def insert_table_results(doc, club_results, simple, external_resources)
     place = 0
     points = nil
     club_results.each do |club_result|
@@ -250,7 +252,9 @@ class FogCup
         }
       else
         doc.tr(:style => "height:48px;font:large arial;") {
-          doc.td() { doc.img(:src => "./resources/#{place}.jpg", :alt=> "Platz #{place}. ") {} }
+          img_link = "./resources/#{place}.jpg"
+          img_link = "http://www.kolv.de/bilder/#{place}.jpg" if external_resources
+          doc.td() { doc.img(:src => img_link, :alt=> "Platz #{place}. ") {} }
           doc.td(:style => "padding : 0 10 px;") { doc.strong() { doc.text("#{club_result.club_name}") } }
           doc.td() { doc.strong() { doc.text("#{club_result.points}") } }
         }

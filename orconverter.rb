@@ -28,7 +28,10 @@ optparse = OptionParser.new do |opts|
     options[:fog_cup] = f || "Nebel-Cup #{actual_year}"
   end
 
-  puts options[:fog_cup].to_s
+  options[:linked_resources] = false
+  opts.on('-l', '--linked_resources', 'use external resources (image links) instead of local resources') do
+    options[:linked_resources] = true
+  end
 
 
   # Disable show of NOR-points
@@ -65,5 +68,5 @@ if !options[:fog_cup].nil?
   cup_name = options[:fog_cup]
   fogCup = FogCup.new(cup_name, actual_year, iof_result_list_reader.events)
   fogCup.simple_output_cup if options[:verbose]
-  fogCup.erwins_original_html_output()
+  fogCup.erwins_original_html_output(options[:linked_resources])
 end

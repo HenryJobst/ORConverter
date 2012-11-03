@@ -84,7 +84,7 @@ class IofResultListReader
 
     root_node.children.each do |child|
       if child.name == "EventId"
-        event.event_name = child.content
+        event.name = child.content
       elsif child.name == "Event"
         event.name = child.content
       elsif child.name == "ClassResult"
@@ -130,7 +130,9 @@ class IofResultListReader
               elsif person_result_child.name == "Result"
                 person_result_child.children.each do |resultChild|
                   if resultChild.name == "Time"
-                    person_result.time = Time.parse(resultChild.content) if !resultChild.content.empty?
+                    if !resultChild.content.empty?
+                      person_result.time = Time.parse(prepare_time(resultChild.content))
+                    end
                   elsif resultChild.name == "ResultPosition"
                     person_result.position = resultChild.content if !resultChild.content.empty?
                   elsif resultChild.name == "CompetitorStatus"
@@ -146,6 +148,11 @@ class IofResultListReader
 
     event.name = filename if event.name.nil?
 
+  end
+
+  def prepare_time(time_string)
+    (time_string = "00:" + time_string) if time_string =~ /^\d+:\d+($|\.\d+$)/
+    time_string
   end
 
   def sort_by_position
