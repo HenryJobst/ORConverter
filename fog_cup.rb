@@ -181,7 +181,7 @@ class FogCup
               }
               doc.td(:style => "vertical-align:top; width:50%;") {
                 doc.pre() {
-                  doc.h3("Gesamtwertung #{@cup_name}") {}
+                  doc.h1("Gesamtwertung #{@cup_name}") {}
                   doc.table(:style => "margin:auto;") {
                     insert_table_header(doc)
                     insert_table_results(doc,
@@ -195,7 +195,7 @@ class FogCup
             doc.tr() {
               doc.td(:style => "vertical-align:top") {
                 doc.pre() {
-                  doc.h3("Nachtlauf") {}
+                  doc.h2("Nachtlauf") {}
                   doc.table(:style => "margin:auto;") {
                     insert_table_header(doc)
                     insert_table_results(doc,
@@ -207,7 +207,7 @@ class FogCup
 
               doc.td(:style => "vertical-align:top") {
                 doc.pre() {
-                  doc.h3("Taglauf") {}
+                  doc.h2("Taglauf") {}
                   doc.table(:style => "margin:auto;") {
                     insert_table_header(doc)
                     insert_table_results(doc,
@@ -237,26 +237,31 @@ class FogCup
 
   def insert_table_results(doc, club_results, simple, external_resources)
     place = 0
+    count = 0
     points = nil
     club_results.each do |club_result|
       if (points.nil? || club_result.points < points)
-        place += 1
+        count += 1
+        place = count
         points = club_result.points
+      else
+        count += 1
       end
+
 
       if place > 3 || simple
         doc.tr() {
-          doc.td(:style => "text-align:right") { doc.text("#{place}. ") }
+          doc.td(:style => "text-align:right") { doc.text("%2s." % place) }
           doc.td(:style => "padding : 0 10 px;") { doc.text("#{club_result.club_name}") }
-          doc.td() { doc.text("#{club_result.points}") }
+          doc.td(:style => "text-align:right") { doc.text("%3s" % club_result.points) }
         }
       else
         doc.tr(:style => "height:48px;font:large arial;") {
           img_link = "./resources/#{place}.jpg"
           img_link = "http://www.kolv.de/bilder/#{place}.jpg" if external_resources
-          doc.td() { doc.img(:src => img_link, :alt=> "Platz #{place}. ") {} }
+          doc.td() { doc.img(:src => img_link, :alt=> "Platz %2s." % place) {} }
           doc.td(:style => "padding : 0 10 px;") { doc.strong() { doc.text("#{club_result.club_name}") } }
-          doc.td() { doc.strong() { doc.text("#{club_result.points}") } }
+          doc.td(:style => "text-align:right") { doc.strong() { doc.text("%3s" % club_result.points) } }
         }
       end
 
@@ -264,14 +269,22 @@ class FogCup
   end
 
   def insert_table_header(doc)
-    doc.tr() {
+    doc.tr(:style => "text-align:left") {
       doc.td(:style => "48px;") {
-        doc.text("Platz")
+        doc.font(:size => "+1") {
+          doc.text("Platz")
+        }
       }
-      doc.td(:style => "padding: 0 10px;") {
-        doc.text("Verein")
+      doc.td(:style => "padding: 0 10px;text-align:center") {
+        doc.font(:size => "+1") {
+          doc.text("Verein")
+        }
       }
-      doc.td("Punkte") {}
+      doc.td(:style => "text-align:right") {
+        doc.font(:size => "+1") {
+          doc.text("Punkte")
+        }
+      }
     }
   end
 

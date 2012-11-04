@@ -57,8 +57,7 @@ class EventClass
   attr_accessor :results
 
   def ignore_in_nor
-    #return true if name == "BK" || name == "BL"
-    false
+    return true if name == "BK" || name == "BL" || name == "Trim"
   end
 
 end
