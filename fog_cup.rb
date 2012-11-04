@@ -54,6 +54,7 @@ class FogCup
           next if person_result.rank_value == 0
           club_name = person_result.get_club_name
           next if club_name.match("Volkssport")
+          next if club_name.match("ohne Verein")
           club_event_result = cup_event_result.club_event_results[club_name.to_sym]
           if club_event_result.nil?
             # create & store
@@ -223,7 +224,9 @@ class FogCup
       }
     end
 
-    File.open("ergebnis_#{@cup_name.gsub("\s", "_")}.html",'w'){|f| f.write builder.to_html}
+    File.open("ergebnis_#{File.basename(@cup_name.gsub("\s", "_").tr("/\000", ""))}.html",'w') do |f|
+      f.write builder.to_html
+    end
 
   end
 
