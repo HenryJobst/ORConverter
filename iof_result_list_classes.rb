@@ -3,6 +3,7 @@ class PersonResult
   attr_accessor :person_id
   attr_accessor :family_name
   attr_accessor :given_name
+  attr_accessor :birth_year
   attr_accessor :club_id
   attr_accessor :club_name
   attr_accessor :club_short_name

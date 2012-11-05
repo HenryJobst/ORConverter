@@ -111,6 +111,12 @@ class IofResultListReader
                     person_result.given_name = given.content if given
                   elsif personChild.name == "PersonId"
                     person_result.person_id = personChild.content
+                  elsif personChild.name == "BirthDate"
+                    if personChild.first_element_child.name == "Date"
+                      year = personChild.first_element_child.content
+                      (year = year[-2..-1]) if year.length > 2
+                      person_result.birth_year = year
+                    end
                   end
                 end
               elsif person_result_child.name == "PersonId"
@@ -201,8 +207,9 @@ class IofResultListReader
         puts "\n* #{event_class.name}"
         event_class.results.each do |person_result|
           rank = person_result.get_position
-          printf "%8s %-40s %-40s %9s %2s\n" % [rank,
+          printf "%8s %-40s %2s %-40s %9s %2s\n" % [rank,
                                                 person_result.full_name,
+                                                person_result.birth_year,
                                                 person_result.club_short_name,
                                                 !person_result.time.nil? ? person_result.time.strftime("%H:%M:%S") : "",
                                                 person_result.rank_value!=0 ?
