@@ -24,25 +24,33 @@ class CupEventResult
 end
 
 class Cup
+  attr_accessor :cup_name
   attr_accessor :cup_event_results
   attr_accessor :cup_final_result
+
+  def initialize(name)
+    cup_name = name
+  end
 end
 
 class FogCup
 
+  attr_accessor :cup
+  attr_accessor :actual_year
+  attr_accessor :events
+
   def initialize(cup_name, actual_year, events)
-    @events = events
-    @cup = Cup.new
-    @cup_name = cup_name
-    @actual_year = actual_year
+    cup = Cup.new(cup_name)
+    actual_year = actual_year
+    events = events
     calculate_fog_cup
   end
 
   def calculate_fog_cup
 
-    @cup.cup_event_results = Array.new
+    cup.cup_event_results = Array.new
 
-    @events.each do |event|
+    events.each do |event|
 
       # create & initialize cup event result
       cup_event_result = CupEventResult.new
@@ -86,11 +94,11 @@ class FogCup
     # create & initialize cup final result
     cup_final_result = CupEventResult.new
     cup_final_result.club_event_results = Hash.new
-    cup_final_result.event_name = @cup_name
-    @cup.cup_final_result = cup_final_result
+    cup_final_result.event_name = cup.cup_name
+    cup.cup_final_result = cup_final_result
 
     # Merge event results
-    @cup.cup_event_results.each do |event_result|
+    cup.cup_event_results.each do |event_result|
 
       event_result.club_event_results.values.each do |club_result|
 
@@ -123,8 +131,6 @@ class FogCup
         end
       end
     end
-
-
   end
 
   def simple_output_cup_event(event_result, with_class)
@@ -155,79 +161,11 @@ class FogCup
   end
 
   def simple_output_cup
-    @cup.cup_event_results.each do |event_result|
+    cup.cup_event_results.each do |event_result|
       simple_output_cup_event(event_result, true)
     end
 
-    simple_output_cup_event(@cup.cup_final_result, false)
-  end
-
-  def erwins_original_html_output(external_resources)
-    builder = Nokogiri::HTML::Builder.new do |doc|
-      doc.html {
-        doc.head() {
-          doc.title("Ergebnis #{@cup_name}")
-          doc.style(".tabelle td {height:30px;}", :type => "text/css")
-        }
-        doc.body() {
-          doc.table(:border => "1", :style => 'width:950px;text-align:center;') {
-            doc.tr {
-              doc.td(:style => "vertical-align:top; text-align:center; vertical-align:middle; width:50%;font:x-large arial;") {
-                img_link = "./resources/nebelcup_logo.jpg"
-                img_link = "http://www.kolv.de/bilder/nebelcup_logo.jpg" if external_resources
-                doc.img(:src => img_link, :alt => "#{@cup_name}", :title => "#{@cup_name}")
-                doc.br()
-                doc.text(@actual_year)
-                doc.br()
-              }
-              doc.td(:style => "vertical-align:top; width:50%;") {
-                doc.pre() {
-                  doc.h1("Gesamtwertung #{@cup_name}") {}
-                  doc.table(:style => "margin:auto;") {
-                    insert_table_header(doc)
-                    insert_table_results(doc,
-                                         sort_club_results(@cup.cup_final_result.club_event_results.values),
-                                         false, external_resources)
-                  }
-                }
-              }
-            }
-
-            doc.tr() {
-              doc.td(:style => "vertical-align:top") {
-                doc.pre() {
-                  doc.h2("Nachtlauf") {}
-                  doc.table(:style => "margin:auto;") {
-                    insert_table_header(doc)
-                    insert_table_results(doc,
-                                         sort_club_results(@cup.cup_event_results.fetch(0).club_event_results.values),
-                                         true, external_resources) if !@cup.cup_event_results.empty?
-                  }
-                }
-              }
-
-              doc.td(:style => "vertical-align:top") {
-                doc.pre() {
-                  doc.h2("Taglauf") {}
-                  doc.table(:style => "margin:auto;") {
-                    insert_table_header(doc)
-                    insert_table_results(doc,
-                                         sort_club_results(@cup.cup_event_results.fetch(1).club_event_results.values),
-                                         true, external_resources) if @cup.cup_event_results.size > 1
-                  }
-                }
-              }
-
-            }
-          }
-        }
-      }
-    end
-
-    File.open("ergebnis_#{File.basename(@cup_name.gsub("\s", "_").tr("/\000", ""))}.html",'w') do |f|
-      f.write builder.to_html
-    end
-
+    simple_output_cup_event(cup.cup_final_result, false)
   end
 
   def sort_club_results(club_results)
@@ -238,57 +176,37 @@ class FogCup
     sorted_club_results
   end
 
-  def insert_table_results(doc, club_results, simple, external_resources)
-    place = 0
-    count = 0
-    points = nil
-    club_results.each do |club_result|
-      if (points.nil? || club_result.points < points)
-        count += 1
-        place = count
-        points = club_result.points
-      else
-        count += 1
-      end
-
-
-      if place > 3 || simple
-        doc.tr() {
-          doc.td(:style => "text-align:right") { doc.text("%2s." % place) }
-          doc.td(:style => "padding : 0 10 px;") { doc.text("#{club_result.club_name}") }
-          doc.td(:style => "text-align:right") { doc.text("%3s" % club_result.points) }
-        }
-      else
-        doc.tr(:style => "height:48px;font:large arial;") {
-          img_link = "./resources/#{place}.jpg"
-          img_link = "http://www.kolv.de/bilder/#{place}.jpg" if external_resources
-          doc.td() { doc.img(:src => img_link, :alt=> "Platz %2s." % place) {} }
-          doc.td(:style => "padding : 0 10 px;") { doc.strong() { doc.text("#{club_result.club_name}") } }
-          doc.td(:style => "text-align:right") { doc.strong() { doc.text("%3s" % club_result.points) } }
-        }
-      end
-
+  def html_output_cup(external_resources)
+    cup.cup_event_results.each do |event_result|
+      html_output_cup_event(event_result, true, external_resources)
     end
+
+    html_output_cup_event(cup.cup_final_result, false, external_resources)
   end
 
-  def insert_table_header(doc)
-    doc.tr(:style => "text-align:left") {
-      doc.td(:style => "48px;") {
-        doc.font(:size => "+1") {
-          doc.text("Platz")
+  def html_output_cup_event(event_result, with_class, external_resources)
+=begin
+    builder = Nokogiri::HTML::Builder.new do |doc|
+      doc.html {
+        doc.head() {
+          doc.title("Ergebnis #{event_result.event_name}")
+          #doc.style(".tabelle td {height:30px;}", :type => "text/css")
+        }
+        doc.body() {
+          doc.h1("Ergebnis #{event_result.event_name}")
+          doc.table(:style => "margin:auto;") {
+            insert_table_header(doc)
+            insert_table_results(doc,
+                                 sort_club_results(cup.cup_event_results.fetch(0).club_event_results.values),
+                                 true, external_resources) if !cup.cup_event_results.empty?
+          }
         }
       }
-      doc.td(:style => "padding: 0 10px;text-align:center") {
-        doc.font(:size => "+1") {
-          doc.text("Verein")
-        }
-      }
-      doc.td(:style => "text-align:right") {
-        doc.font(:size => "+1") {
-          doc.text("Punkte")
-        }
-      }
-    }
-  end
+    end
 
+    File.open("ergebnis_#{File.basename(event_result.event_name.gsub("\s", "_").tr("/\000", ""))}.html",'w') do |f|
+      f.write builder.to_html
+    end
+=end
+  end
 end

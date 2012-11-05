@@ -6,8 +6,9 @@ require "time"
 require "nokogiri"
 require "optparse"
 
-require_relative "iof_result_list_reader.rb"
-require_relative "fog_cup.rb"
+require_relative "iof_result_list_reader"
+require_relative "fog_cup"
+require_relative "fog_cup_original_html_output"
 
 # This hash will hold all of the options
 # parsed from the command-line by
@@ -66,7 +67,8 @@ iof_result_list_reader.simple_output(options[:dont_show_nor_points]) if options[
 
 if !options[:fog_cup].nil?
   cup_name = options[:fog_cup]
-  fogCup = FogCup.new(cup_name, actual_year, iof_result_list_reader.events)
-  fogCup.simple_output_cup if options[:verbose]
-  fogCup.erwins_original_html_output(options[:linked_resources])
+  fog_cup = FogCup.new(cup_name, actual_year, iof_result_list_reader.events)
+  fog_cup.simple_output_cup if options[:verbose]
+  FogCupOriginalHtmlOutput.new(options[:linked_resources])
+  fog_cup.html_output_cup(options[:linked_resources])
 end
