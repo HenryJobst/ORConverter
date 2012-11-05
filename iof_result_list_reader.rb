@@ -47,7 +47,12 @@ end
 
 class IofResultListReader
 
-  def initialize(filenames)
+  attr_accessor :rank_mode
+
+  def initialize(filenames, rank_mode, verbose, dont_show_points)
+    @rank_mode = rank_mode
+    puts "Rank-Mode: #{rank_mode}"
+
     @events = Array.new
 
     filenames.each do |filename|
@@ -55,7 +60,11 @@ class IofResultListReader
     end
 
     sort_by_position
-    calculate_nor_points
+
+    calculate_nor_points if @rank_mode == :nor
+    calculate_kristall_points if @rank_mode == :kristall
+
+    simple_output(dont_show_points) if verbose
 
   end
 
@@ -193,6 +202,36 @@ class IofResultListReader
             person_result.rank_value = 0
           else
             person_result.rank_value = calculate_points_nor(event_class.best_time, person_result.time)
+          end
+        end
+      end
+    end
+  end
+
+  def ignore_club_in_kristall(name)
+    return true if name.nil?
+    return true if name.empty?
+    return true if name =~ /ohne/
+    return true if name =~ /Volkssport/
+    false
+  end
+
+  def calculate_kristall_points
+    @events.each do |event|
+      event.event_classes.each do |event_class|
+        clubs = {}
+        points = 10
+        event_class.results.each do |person_result|
+          if event_class.ignore_in_kristall
+            person_result.rank_value = 0
+          elsif person_result.time.nil? || person_result.position.nil?
+            person_result.rank_value = 0
+          else
+            next if ignore_club_in_kristall(person_result.get_club_name)
+            next if clubs[person_result.get_club_name.to_sym] # only the fist in club counts
+            clubs.store(person_result.get_club_name.to_sym, 1)
+            person_result.rank_value = points
+            points -= 1 if points > 1
           end
         end
       end

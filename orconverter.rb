@@ -8,7 +8,8 @@ require "optparse"
 
 require_relative "iof_result_list_reader"
 require_relative "fog_cup"
-require_relative "fog_cup_original_html_output"
+require_relative "fog_cup_original_html_report"
+require_relative "fog_cup_standard_html_report"
 
 # This hash will hold all of the options
 # parsed from the command-line by
@@ -23,10 +24,17 @@ optparse = OptionParser.new do |opts|
   # of the help screen.
   opts.banner = "Usage: ORConverter.[rb|exe] [options] file1 file2 ..."
 
+  # rank mode
+  options[:rank_mode] = nil
+  opts.on('-r', '--rank_mode [mode]', 'rank mode (nor, kristall)') do |f|
+    options[:rank_mode] = (f || "nor").to_sym
+  end
+
   # calculate and present fog cup result
   options[:fog_cup] = nil
-  opts.on('-f', '--fog_cup [cupname]', 'calculate fog cup results with optional cup name') do |f|
-    options[:fog_cup] = f || "Nebel-Cup #{actual_year}"
+  opts.on('-f', '--fog_cup [report-type]', 'calculate fog cup results with optional report type (1 - Original, 2 - Standard)') do |f|
+    options[:fog_cup] = f || 1
+    @cup_name = "Nebel-Cup #{actual_year}"
   end
 
   options[:linked_resources] = false
@@ -36,9 +44,9 @@ optparse = OptionParser.new do |opts|
 
 
   # Disable show of NOR-points
-  options[:dont_show_nor_points] = false
-  opts.on('--dont_show_nor_points', "Don't show NOR points") do
-    options[:dont_show_nor_points] = true
+  options[:dont_show_points] = false
+  opts.on('--dont_show_points', "Don't show points in in simple output") do
+    options[:dont_show_points] = true
   end
 
   # Define the options, and what they do
@@ -62,13 +70,15 @@ end
 # the options. What's left is the list of files to resize.
 optparse.parse!
 
-iof_result_list_reader = IofResultListReader.new(ARGV)
-iof_result_list_reader.simple_output(options[:dont_show_nor_points]) if options[:verbose]
+iof_result_list_reader = IofResultListReader.new(ARGV, options[:rank_mode],
+                                                 options[:verbose], options[:dont_show_points])
 
 if !options[:fog_cup].nil?
-  cup_name = options[:fog_cup]
-  fog_cup = FogCup.new(cup_name, actual_year, iof_result_list_reader.events)
-  fog_cup.simple_output_cup if options[:verbose]
-  FogCupOriginalHtmlOutput.new(options[:linked_resources])
-  fog_cup.html_output_cup(options[:linked_resources])
+  fog_cup = FogCup.new(@cup_name, actual_year, iof_result_list_reader.events,
+                       options[:verbose])
+  if options[:fog_cup] == 1
+    FogCupOriginalHtmlReport.new(fog_cup, options[:linked_resources])
+  elsif options[:fog_cup] == 2
+    FogCupStandardHtmlReport.new(fog_cup, options[:linked_resources])
+  end
 end

@@ -12,6 +12,10 @@ class PersonResult
   attr_accessor :position
   attr_accessor :rank_value
 
+  def initialize
+    @rank_value = 0
+  end
+
   def full_name
     "#{given_name} #{family_name}"
   end
@@ -59,6 +63,10 @@ class EventClass
 
   def ignore_in_nor
     return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim"
+  end
+
+  def ignore_in_kristall
+    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim" || name == "H-10" || name == "D-10"
   end
 
 end

@@ -29,8 +29,16 @@ class Cup
   attr_accessor :cup_final_result
 
   def initialize(name)
-    cup_name = name
+    @cup_name = name
   end
+end
+
+def sort_club_results(club_results)
+  sorted_club_results = club_results
+  sorted_club_results.sort! do |a, b|
+    [-a.points, a.club_name] <=> [-b.points, b.club_name]
+  end
+  sorted_club_results
 end
 
 class FogCup
@@ -39,18 +47,21 @@ class FogCup
   attr_accessor :actual_year
   attr_accessor :events
 
-  def initialize(cup_name, actual_year, events)
-    cup = Cup.new(cup_name)
-    actual_year = actual_year
-    events = events
+  def initialize(cup_name, actual_year, events, verbose)
+    @cup = Cup.new(cup_name)
+    @actual_year = actual_year
+    @events = events
+
     calculate_fog_cup
+
+    simple_output_cup if verbose
   end
 
   def calculate_fog_cup
 
-    cup.cup_event_results = Array.new
+    @cup.cup_event_results = Array.new
 
-    events.each do |event|
+    @events.each do |event|
 
       # create & initialize cup event result
       cup_event_result = CupEventResult.new
@@ -164,49 +175,6 @@ class FogCup
     cup.cup_event_results.each do |event_result|
       simple_output_cup_event(event_result, true)
     end
-
     simple_output_cup_event(cup.cup_final_result, false)
-  end
-
-  def sort_club_results(club_results)
-    sorted_club_results = club_results
-    sorted_club_results.sort! do |a, b|
-      [-a.points, a.club_name] <=> [-b.points, b.club_name]
-    end
-    sorted_club_results
-  end
-
-  def html_output_cup(external_resources)
-    cup.cup_event_results.each do |event_result|
-      html_output_cup_event(event_result, true, external_resources)
-    end
-
-    html_output_cup_event(cup.cup_final_result, false, external_resources)
-  end
-
-  def html_output_cup_event(event_result, with_class, external_resources)
-=begin
-    builder = Nokogiri::HTML::Builder.new do |doc|
-      doc.html {
-        doc.head() {
-          doc.title("Ergebnis #{event_result.event_name}")
-          #doc.style(".tabelle td {height:30px;}", :type => "text/css")
-        }
-        doc.body() {
-          doc.h1("Ergebnis #{event_result.event_name}")
-          doc.table(:style => "margin:auto;") {
-            insert_table_header(doc)
-            insert_table_results(doc,
-                                 sort_club_results(cup.cup_event_results.fetch(0).club_event_results.values),
-                                 true, external_resources) if !cup.cup_event_results.empty?
-          }
-        }
-      }
-    end
-
-    File.open("ergebnis_#{File.basename(event_result.event_name.gsub("\s", "_").tr("/\000", ""))}.html",'w') do |f|
-      f.write builder.to_html
-    end
-=end
   end
 end

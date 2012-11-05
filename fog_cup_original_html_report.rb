@@ -1,12 +1,13 @@
 require_relative "fog_cup"
 
-class FogCupOriginalHtmlOutput
+class FogCupOriginalHtmlReport
+
   attr_accessor :fog_cup
   attr_accessor :external_resources
 
   def initialize(fog_cup, external_resources)
-    external_resources = external_resources
-    fog_cup = fog_cup
+    @external_resources = external_resources
+    @fog_cup = fog_cup
     run
   end
 
@@ -14,7 +15,7 @@ class FogCupOriginalHtmlOutput
     builder = Nokogiri::HTML::Builder.new do |doc|
       doc.html {
         doc.head() {
-          doc.title("Ergebnis #{fog_cup.cup.cup_name}")
+          doc.title("Ergebnis #{@fog_cup.cup.cup_name}")
           doc.style(".tabelle td {height:30px;}", :type => "text/css")
         }
         doc.body() {
@@ -22,10 +23,10 @@ class FogCupOriginalHtmlOutput
             doc.tr {
               doc.td(:style => "vertical-align:top; text-align:center; vertical-align:middle; width:50%;font:x-large arial;") {
                 img_link = "./resources/nebelcup_logo.jpg"
-                img_link = "http://www.kolv.de/bilder/nebelcup_logo.jpg" if external_resources
-                doc.img(:src => img_link, :alt => "#{fog_cup.cup.cup_name}", :title => "#{fog_cup.cup.cup_name}")
+                img_link = "http://www.kolv.de/bilder/nebelcup_logo.jpg" if @external_resources
+                doc.img(:src => img_link, :alt => "#{@fog_cup.cup.cup_name}", :title => "#{@fog_cup.cup.cup_name}")
                 doc.br()
-                doc.text(fog_cup.actual_year)
+                doc.text(@fog_cup.actual_year)
                 doc.br()
               }
               doc.td(:style => "vertical-align:top; width:50%;") {
@@ -34,8 +35,8 @@ class FogCupOriginalHtmlOutput
                   doc.table(:style => "margin:auto;") {
                     insert_table_header(doc)
                     insert_table_results(doc,
-                                         sort_club_results(@cup.cup_final_result.club_event_results.values),
-                                         false, external_resources)
+                                         sort_club_results(@fog_cup.cup.cup_final_result.club_event_results.values),
+                                         false, @external_resources)
                   }
                 }
               }
@@ -49,7 +50,7 @@ class FogCupOriginalHtmlOutput
                     insert_table_header(doc)
                     insert_table_results(doc,
                                          sort_club_results(fog_cup.cup.cup_event_results.fetch(0).club_event_results.values),
-                                         true, external_resources) if !fog_cup.cup.cup_event_results.empty?
+                                         true, @external_resources) if !@fog_cup.cup.cup_event_results.empty?
                   }
                 }
               }
@@ -60,8 +61,8 @@ class FogCupOriginalHtmlOutput
                   doc.table(:style => "margin:auto;") {
                     insert_table_header(doc)
                     insert_table_results(doc,
-                                         sort_club_results(fog_cup.cup.cup_event_results.fetch(1).club_event_results.values),
-                                         true, external_resources) if fog_cup.cup.cup_event_results.size > 1
+                                         sort_club_results(@fog_cup.cup.cup_event_results.fetch(1).club_event_results.values),
+                                         true, @external_resources) if @fog_cup.cup.cup_event_results.size > 1
                   }
                 }
               }
@@ -72,7 +73,7 @@ class FogCupOriginalHtmlOutput
       }
     end
 
-    File.open("ergebnis_#{File.basename(fog_cup.cup.cup_name.gsub("\s", "_").tr("/\000", ""))}.html",'w') do |f|
+    File.open("ergebnis_#{File.basename(@fog_cup.cup.cup_name.gsub("\s", "_").tr("/\000", ""))}.html",'w') do |f|
       f.write builder.to_html
     end
 
