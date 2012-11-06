@@ -48,6 +48,7 @@ end
 class IofResultListReader
 
   attr_accessor :rank_mode
+  attr_accessor :events
 
   def initialize(filenames, rank_mode, verbose, dont_show_points)
     @rank_mode = rank_mode
@@ -66,10 +67,6 @@ class IofResultListReader
 
     simple_output(dont_show_points) if verbose
 
-  end
-
-  def events
-    @events
   end
 
   def parse_xml_file(filename)
@@ -152,6 +149,16 @@ class IofResultListReader
                     person_result.position = resultChild.content if !resultChild.content.empty?
                   elsif resultChild.name == "CompetitorStatus"
                     person_result.state = resultChild.attribute("value")
+                  elsif !class_result.length && resultChild.name == "CourseLength"
+                    if !resultChild.content.empty?
+                      class_result.length = resultChild.content
+                      if class_result.length =~ /^\d+$/
+                        class_result.length = (class_result.length.to_i / 1000.0).round(1).to_s
+                      end
+                    end
+                  elsif resultChild.name == "SplitTime"
+                    split = resultChild.attribute("sequence").to_s.to_i
+                    class_result.control_count = split if class_result.control_count.nil? || split > class_result.control_count
                   end
                 end
               end
@@ -174,7 +181,7 @@ class IofResultListReader
     @events.each do |event|
       event.event_classes.each do |event_class|
         event_class.results.sort! do |a, b|
-          [a.get_integer_position.to_i, a.time.to_s, a.family_name, a.given_name] <=> [b.get_integer_position.to_i, b.time.to_s, b.family_name, b.given_name]
+          [a.integer_position.to_i, a.time.to_s, a.family_name, a.given_name] <=> [b.integer_position.to_i, b.time.to_s, b.family_name, b.given_name]
         end
       end
     end
@@ -243,7 +250,8 @@ class IofResultListReader
       puts "\n---------------------------------------"
       puts "Event: #{event.name}" if event.name
       event.event_classes.each do |event_class|
-        puts "\n* #{event_class.name}"
+        printf "\n%s  (%s)       %s km     %s P\n" %
+                   [event_class.name, event_class.results.size, event_class.length, event_class.control_count]
         event_class.results.each do |person_result|
           rank = person_result.get_position
           printf "%8s %-40s %2s %-40s %9s %2s\n" % [rank,

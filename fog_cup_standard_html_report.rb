@@ -30,7 +30,7 @@ class FogCupStandardHtmlReport
       }
     end
 
-    File.open("ergebnis_#{File.basename(event_result.event_name.gsub("\s", "_").tr("/\000", ""))}.html",'w') do |f|
+    File.open("ergebnis_#{filename_from_name(event_result.event_name)}.html",'w') do |f|
       f.write builder.to_html
     end
 =end

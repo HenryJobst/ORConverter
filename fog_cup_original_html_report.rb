@@ -73,7 +73,7 @@ class FogCupOriginalHtmlReport
       }
     end
 
-    File.open("ergebnis_#{File.basename(@fog_cup.cup.cup_name.gsub("\s", "_").tr("/\000", ""))}.html",'w') do |f|
+    File.open("ergebnis_#{filename_from_name(@fog_cup.cup.cup_name)}.html",'w') do |f|
       f.write builder.to_html
     end
 

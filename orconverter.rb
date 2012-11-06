@@ -10,6 +10,7 @@ require_relative "iof_result_list_reader"
 require_relative "fog_cup"
 require_relative "fog_cup_original_html_report"
 require_relative "fog_cup_standard_html_report"
+require_relative "standard_html_result_report"
 
 # This hash will hold all of the options
 # parsed from the command-line by
@@ -72,6 +73,8 @@ optparse.parse!
 
 iof_result_list_reader = IofResultListReader.new(ARGV, options[:rank_mode],
                                                  options[:verbose], options[:dont_show_points])
+
+StandardHtmlResultReport.new(iof_result_list_reader, options[:dont_show_points])
 
 if !options[:fog_cup].nil?
   fog_cup = FogCup.new(@cup_name, actual_year, iof_result_list_reader.events,

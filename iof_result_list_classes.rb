@@ -42,7 +42,25 @@ class PersonResult
     position.to_s
   end
 
-  def get_integer_position
+  def real_position
+    return true if get_position =~ /^\d+$/
+    false
+  end
+
+  def real_or_ak_position
+    pos = get_position
+    return pos if pos =~ /^\d+$/
+    return pos if pos =~ /AK/
+    nil
+  end
+
+  def real_or_ak_position_to_s
+    pos = real_position
+    return pos.to_s if pos
+    ""
+  end
+
+  def integer_position
     if position.nil? || position.empty?
       return 9999999
     end
@@ -60,6 +78,8 @@ class EventClass
   attr_accessor :name
   attr_accessor :best_time
   attr_accessor :results
+  attr_accessor :length
+  attr_accessor :control_count
 
   def ignore_in_nor
     return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim"
@@ -74,4 +94,8 @@ end
 class Event
   attr_accessor :name
   attr_accessor :event_classes
+end
+
+def filename_from_name(name)
+  File.basename(name.gsub("\s", "_").tr("/\000", ""))
 end
