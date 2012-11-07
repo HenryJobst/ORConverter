@@ -85,6 +85,10 @@ class EventClass
     return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim"
   end
 
+  def ignore_in_nebel
+    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim"
+  end
+
   def ignore_in_kristall
     return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim" || name == "H-10" || name == "D-10"
   end
@@ -97,5 +101,5 @@ class Event
 end
 
 def filename_from_name(name)
-  File.basename(name.gsub("\s", "_").tr("/\000", ""))
+  File.basename(name, File.extname(name)).gsub("\s", "_").tr("/\000", "").capitalize!
 end

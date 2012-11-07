@@ -7,10 +7,12 @@ require "nokogiri"
 require "optparse"
 
 require_relative "iof_result_list_reader"
+require_relative "points_calculator"
 require_relative "fog_cup"
 require_relative "fog_cup_original_html_report"
 require_relative "fog_cup_standard_html_report"
 require_relative "standard_html_result_report"
+
 
 # This hash will hold all of the options
 # parsed from the command-line by
@@ -27,27 +29,27 @@ optparse = OptionParser.new do |opts|
 
   # rank mode
   options[:rank_mode] = nil
-  opts.on('-r', '--rank_mode [mode]', 'rank mode (nor, kristall)') do |f|
-    options[:rank_mode] = (f || "nor").to_sym
+  opts.on('-r', '--rank-mode [mode]', [:nebel, :nor, :kristall], 'rank mode (kristall, nebel, nor, kristall)') do |t|
+    options[:rank_mode] = t || :nor
   end
 
   # calculate and present fog cup result
   options[:fog_cup] = nil
-  opts.on('-f', '--fog_cup [report-type]', 'calculate fog cup results with optional report type (1 - Original, 2 - Standard)') do |f|
-    options[:fog_cup] = f || 1
+  opts.on('-f', '--fog-cup [TYPE]', [:original, :standard], 'calculate fog cup results with optional report type (original, standard)') do |t|
+    options[:fog_cup] = t || :original
     @cup_name = "Nebel-Cup #{actual_year}"
   end
 
   options[:linked_resources] = false
-  opts.on('-l', '--linked_resources', 'use external resources (image links) instead of local resources') do
+  opts.on('-l', '--linked-resources', 'use external resources (image links) instead of local resources') do
     options[:linked_resources] = true
   end
 
 
-  # Disable show of NOR-points
-  options[:dont_show_points] = false
-  opts.on('--dont_show_points', "Don't show points in in simple output") do
-    options[:dont_show_points] = true
+  # Show of points in reports
+  options[:show_points] = true
+  opts.on('-s', '--[no]-show-points', "Show points in standard reports") do |v|
+    options[:show_points] = v
   end
 
   # Define the options, and what they do
@@ -71,17 +73,20 @@ end
 # the options. What's left is the list of files to resize.
 optparse.parse!
 
-iof_result_list_reader = IofResultListReader.new(ARGV, options[:rank_mode],
-                                                 options[:verbose], options[:dont_show_points])
+iof_result_list_reader = IofResultListReader.new(ARGV, options[:verbose])
 
-StandardHtmlResultReport.new(iof_result_list_reader, options[:dont_show_points])
+PointsCalculator.new(iof_result_list_reader.events, options[:rank_mode], options[:verbose])
+
+iof_result_list_reader.simple_output(options[:show_points]) if options[:verbose]
+
+StandardHtmlResultReport.new(iof_result_list_reader, options[:show_points])
 
 if !options[:fog_cup].nil?
   fog_cup = FogCup.new(@cup_name, actual_year, iof_result_list_reader.events,
                        options[:verbose])
-  if options[:fog_cup] == 1
+  if options[:fog_cup] == :original
     FogCupOriginalHtmlReport.new(fog_cup, options[:linked_resources])
-  elsif options[:fog_cup] == 2
+  elsif options[:fog_cup] == :standard
     FogCupStandardHtmlReport.new(fog_cup, options[:linked_resources])
   end
 end
