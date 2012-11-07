@@ -23,13 +23,13 @@ class PersonResult
   def get_position
     if position.nil? || position.empty?
       #puts state.to_s
-      if state.to_s == "OK" || state.to_s == "NotCompeting"
+      if ak()
         return "AK"
       elsif state.to_s == "MisPunch"
         return "Fehlst"
       elsif state.to_s == "DidNotFinish" || state.to_s == "SportWithdr"
         return "Aufg"
-      elsif state.to_s == "DidNotStart" || state.to_s == "Cancelled"
+      elsif did_not_start()
         return "N Ang"
       elsif state.to_s == "Disqualified"
         return "Disq"
@@ -40,6 +40,14 @@ class PersonResult
       end
     end
     position.to_s
+  end
+
+  def did_not_start
+    state.to_s == "DidNotStart" || state.to_s == "Cancelled"
+  end
+
+  def ak
+    state.to_s == "OK" || state.to_s == "NotCompeting"
   end
 
   def real_position
@@ -60,9 +68,11 @@ class PersonResult
     ""
   end
 
+  HIGH_POSITION = 9999999
+
   def integer_position
     if position.nil? || position.empty?
-      return 9999999
+      return ak ? HIGH_POSITION-1 : (did_not_start ? HIGH_POSITION+1 : HIGH_POSITION)
     end
     position
   end
@@ -100,6 +110,11 @@ class Event
   attr_accessor :event_classes
 end
 
-def filename_from_name(name)
-  File.basename(name, File.extname(name)).gsub("\s", "_").tr("/\000", "").capitalize!
+def eventname_from_name(name)
+  File.basename(name, File.extname(name))
 end
+
+def filename_from_name(name)
+  eventname_from_name(name).gsub("\s", "_").tr("/\000", "").capitalize!
+end
+

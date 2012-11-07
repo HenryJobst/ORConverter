@@ -58,6 +58,18 @@ optparse = OptionParser.new do |opts|
     options[:verbose] = true
   end
 
+  # report name row 1
+  options[:name1] = nil
+  opts.on('--name1 Name', 'Name 1 (first row) for a report, eg. cup name)') do |n|
+    options[:name1] = n
+  end
+
+  # report name row 2
+  options[:name2] = nil
+  opts.on('--name2 Name', 'Name 2 (second row) for a report, eg. event name)') do |n|
+    options[:name2] = n
+  end
+
   # This displays the help screen, all programs are
   # assumed to have this option.
   opts.on('-h', '--help', 'Display this screen') do
@@ -79,7 +91,7 @@ PointsCalculator.new(iof_result_list_reader.events, options[:rank_mode], options
 
 iof_result_list_reader.simple_output(options[:show_points]) if options[:verbose]
 
-StandardHtmlResultReport.new(iof_result_list_reader, options[:show_points])
+StandardHtmlResultReport.new(iof_result_list_reader, options[:show_points], options[:name1], options[:name2])
 
 if !options[:fog_cup].nil?
   fog_cup = FogCup.new(@cup_name, actual_year, iof_result_list_reader.events,

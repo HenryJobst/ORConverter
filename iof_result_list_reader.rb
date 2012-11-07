@@ -159,7 +159,7 @@ class IofResultListReader
       end
     end
 
-    event.name = filename if event.name.nil?
+    event.name = eventname_from_name(filename) if event.name.nil?
 
   end
 
