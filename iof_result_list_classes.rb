@@ -110,11 +110,15 @@ class Event
   attr_accessor :event_classes
 end
 
-def eventname_from_name(name)
+def name_from_filename(name)
   File.basename(name, File.extname(name))
 end
 
 def filename_from_name(name)
-  eventname_from_name(name).gsub("\s", "_").tr("/\000", "").capitalize!
+  prepare_filename(name_from_filename(name))
+end
+
+def prepare_filename(name)
+  name.gsub("\s", "_").gsub("/","_").gsub("\\","_").downcase
 end
 

@@ -99,6 +99,7 @@ if !options[:fog_cup].nil?
   if options[:fog_cup] == :original
     FogCupOriginalHtmlReport.new(fog_cup, options[:linked_resources])
   elsif options[:fog_cup] == :standard
-    FogCupStandardHtmlReport.new(fog_cup, options[:linked_resources])
+    FogCupStandardHtmlReport.new(fog_cup, options[:linked_resources],
+                                 options[:show_points], options[:name1], options[:name2])
   end
 end
