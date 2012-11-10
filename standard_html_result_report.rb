@@ -45,7 +45,13 @@ class StandardHtmlResultReport
                       doc.th(:class => "cn") { doc.text(event_class.name) }
                       doc.th(:class => "cs") { doc.text("(%s)" % event_class.results.size) }
                       doc.th(:class => "cl") { doc.text("%s km" % event_class.length) }
-                      doc.th(:class => "cc") { doc.text("%s P" % event_class.control_count) }
+                      doc.th(:class => "cc") {
+                        if event_class.control_count
+                          doc.text("%s P" % event_class.control_count)
+                        else
+                          doc.text("")
+                        end
+                      }
                       doc.th(:class => "cb") { doc.text("") }
                     }
                   }

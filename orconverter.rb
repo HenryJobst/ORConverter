@@ -29,7 +29,7 @@ optparse = OptionParser.new do |opts|
 
   # rank mode
   options[:rank_mode] = nil
-  opts.on('-r', '--rank-mode [mode]', [:nebel, :nor, :kristall], 'rank mode (kristall, nebel, nor, kristall)') do |t|
+  opts.on('-r', '--rank-mode [mode]', [:nebel, :nor, :kristall], 'rank mode (nebel, nor, kristall)') do |t|
     options[:rank_mode] = t || :nor
   end
 
@@ -48,8 +48,9 @@ optparse = OptionParser.new do |opts|
 
   # Show of points in reports
   options[:show_points] = true
-  opts.on('-s', '--[no]-show-points', "Show points in standard reports") do |v|
+  opts.on('-s', '--no-showpoints', "Show points in standard reports") do |v|
     options[:show_points] = v
+    puts v
   end
 
   # Define the options, and what they do
