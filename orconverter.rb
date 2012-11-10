@@ -11,6 +11,7 @@ require_relative "points_calculator"
 require_relative "fog_cup"
 require_relative "fog_cup_original_html_report"
 require_relative "fog_cup_standard_html_report"
+require_relative "fog_cup_standard_html_report_css"
 require_relative "standard_html_result_report"
 
 
@@ -35,8 +36,8 @@ optparse = OptionParser.new do |opts|
 
   # calculate and present fog cup result
   options[:fog_cup] = nil
-  opts.on('-f', '--fog-cup [TYPE]', [:original, :standard], 'calculate fog cup results with optional report type (original, standard)') do |t|
-    options[:fog_cup] = t || :original
+  opts.on('-f', '--fog-cup [TYPE]', [:original, :standard, :standard_css], 'calculate fog cup results with optional report type (original, standard)') do |t|
+    options[:fog_cup] = t || :standard_css
     @cup_name = "Nebel-Cup #{actual_year}"
   end
 
@@ -100,6 +101,9 @@ if !options[:fog_cup].nil?
     FogCupOriginalHtmlReport.new(fog_cup, options[:linked_resources])
   elsif options[:fog_cup] == :standard
     FogCupStandardHtmlReport.new(fog_cup, options[:linked_resources],
+                                 options[:show_points], options[:name1], options[:name2])
+  elsif options[:fog_cup] == :standard_css
+    FogCupStandardHtmlReportCss.new(fog_cup, options[:linked_resources],
                                  options[:show_points], options[:name1], options[:name2])
   end
 end

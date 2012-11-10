@@ -96,11 +96,11 @@ class EventClass
   end
 
   def ignore_in_nebel
-    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim"
+    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trimm"
   end
 
   def ignore_in_kristall
-    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim" || name == "H-10" || name == "D-10"
+    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trimm" || name == "H-10" || name == "D-10"
   end
 
 end
