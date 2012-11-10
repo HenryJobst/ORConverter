@@ -14,7 +14,6 @@ require_relative "fog_cup_standard_html_report"
 require_relative "fog_cup_standard_html_report_css"
 require_relative "standard_html_result_report"
 
-
 # This hash will hold all of the options
 # parsed from the command-line by
 # OptionParser.

@@ -75,7 +75,7 @@ class FogCupStandardHtmlReportCss
               }
               doc.tr() {
                 doc.th(:id => "event_name") { doc.nobr {doc.text("#{local_name2 ? local_name2 : "Ergebnisse"}") } }
-                doc.th(:id => "creation_text") { doc.nobr { doc.text("erzeugt von OEConverter") } }
+                doc.th(:id => "creation_text") { doc.nobr { doc.text("erzeugt mit OR-Converter von Henry Jobst") } }
               }
             }
           }
