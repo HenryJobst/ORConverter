@@ -20,88 +20,76 @@ class StandardHtmlResultReport
         doc.html {
           doc.head() {
             doc.title("#{name1} - #{name2}")
-            doc.style(:type=>"text/css") {
-              doc.text("body { color: #000; background-color: #fff; font: 10pt/1.2 Arial, Helvetica, sans-serif; } ")
-              doc.text("table { border-collapse: collapse; border-spacing: 2px 2px; font-size: 10pt; margin: 1em;}")
-              doc.text(".page_header_table { font-size: 12pt; }")
-              doc.text("th { padding: 0px 0px 0px 0px; }")
-              doc.text(".eventclassresult { padding: 1px 15px 1px 5px; }")
-              doc.text(".eventclass { padding: 15px 15px 10px 5px; }")
-              doc.text("td { padding: 2px 15px 2px 5px; }")
-              doc.text(".intpos_1 { font-size: 110%; padding-bottom: 15px; }")
-              doc.text(".intpos_2 { font-size: 110%; padding-bottom: 15px; }")
-              doc.text(".intpos_3 { font-size: 110%; padding-bottom: 25px; }")
-              doc.text(".realpos_false { font-size: 90%; }")
-              doc.text("#page_header { font-weight: bold; padding: 0; border: none; margin: 0; width: 100%; }")
-            }
+            doc.link(:rel => "stylesheet", :type => "text/css", :href => "printout.css")
           }
           doc.body() {
             doc.div(:id => "page_header") {
-              doc.table(:class => "page_header_table", :width => "600px", :style => "table-layout:auto;") {
+              doc.table() {
                 doc.tr() {
-                  doc.th(:align => "left") { doc.nobr() { doc.text("#{name1 ? name1 : event.name}") } }
-                  doc.th(:align => "right") { doc.text("#{Time.now.strftime("%d.%m.%Y %H:%M")}") }
+                  doc.th(:id => "cup_name") { doc.nobr { doc.text("#{@name1 ? @name1 : event.name}") } }
+                  doc.th(:id => "date_time") { doc.nobr { doc.text("#{Time.now.strftime("%d.%m.%Y %H:%M")}") } }
                 }
                 doc.tr() {
-                  doc.th(:align => "left") { doc.text("#{name2 ? name2 : "Ergebnisse"}") }
-                  doc.th(:align => "right") { doc.text("") }
+                  doc.th(:id => "event_name") { doc.nobr {doc.text("#{name2 ? name2 : "Ergebnisse"}") } }
+                  doc.th(:id => "creation_text") { doc.nobr { doc.text("erzeugt mit OR-Converter von Henry Jobst") } }
                 }
               }
-              doc.hr()
             }
 
-            event.event_classes.each do |event_class|
-              doc.table(:class=>"eventclass", :width => "600px", :cellspacing=>"2") {
-                doc.tbody() {
-                  doc.tr(:class => "eventclass") {
-                    doc.th(event_class.name, :width => "20", :align => "left")
-                    doc.th("(%s)" % event_class.results.size, :width => "80", :align => "left")
-                    doc.th("%s km" % event_class.length, :width => "100", :align => "left")
-                    doc.th("%s P" % event_class.control_count, :width => "100", :align => "left")
-                    doc.th()
+            doc.div(:id => "results") {
+              event.event_classes.each do |event_class|
+                doc.table(:id=>"classes") {
+                  doc.tbody() {
+
+                    doc.tr() {
+                      doc.th(:class => "cn") { doc.text(event_class.name) }
+                      doc.th(:class => "cs") { doc.text("(%s)" % event_class.results.size) }
+                      doc.th(:class => "cl") { doc.text("%s km" % event_class.length) }
+                      doc.th(:class => "cc") { doc.text("%s P" % event_class.control_count) }
+                      doc.th(:class => "cb") { doc.text("") }
+                    }
                   }
                 }
-              }
-              doc.table(:class=>"eventclassresult", :width => "600px", :cellspacing=>"2") {
-                last_position_valid = false
-                event_class.results.each do |person_result|
-                  #next if person_result.did_not_start
-                  pos = person_result.real_or_ak_position.to_s
-                  local_position_valid = false
-                  local_position_valid = true if person_result.real_position
+                doc.table(:id => "class_result") {
+                  doc.tbody() {
 
-                  if last_position_valid && !local_position_valid
                     last_position_valid = false
-                    # empty row
-                    doc.tr() { doc.td() { } }
-                    doc.tr() { doc.td() { } }
+                    event_class.results.each do |person_result|
+                      #next if person_result.did_not_start
+                      pos = person_result.real_or_ak_position.to_s
+                      local_position_valid = false
+                      local_position_valid = true if person_result.real_position
+                      first_invalid = false
+                      if last_position_valid && !local_position_valid
+                        last_position_valid = false
+                        first_invalid = true
+                      end
 
-                  end
+                      last_position_valid = true if local_position_valid
+                      doc.tr(:class => "first_invalid_#{first_invalid} realpos_#{person_result.real_position} intpos_#{person_result.integer_position}") {
+                        pos += "." if local_position_valid
+                        doc.td(:class=>"ps", :nowrap=>""){ doc.text("%s" % pos) }
+                        doc.td(:class=>"nm", :nowrap=>""){ doc.text(person_result.full_name) }
+                        doc.td(:class=>"by", :nowrap=>""){ doc.text(person_result.birth_year) }
+                        doc.td(:class=>"cn", :nowrap=>""){ doc.text(person_result.club_short_name) }
+                        if person_result.real_or_ak_position
+                          doc.td(:class=>"tm1", :nowrap=>""){
+                            doc.text(!person_result.time.nil? ? person_result.time.strftime("%k:%M:%S") : "") }
+                        else
+                          doc.td(:class=>"tm2", :nowrap=>""){
+                            doc.text(person_result.get_position) }
+                        end
 
-                  last_position_valid = true if local_position_valid
-                  doc.tr(:class=>"eventclassresult realpos_#{person_result.real_position} intpos_#{person_result.integer_position}") {
-                    doc.td(:width => "10", :align => "right") { }
-                    pos += "." if local_position_valid
-                    doc.td("%s" % pos, :width => "60", :align => "right")
-                    doc.td("", :width => "5", :align => "right")
-                    doc.td(person_result.full_name, :width => "180", :align => "left", :nowrap => "")
-                    doc.td(person_result.birth_year, :width => "12", :align => "right")
-                    doc.td("", :width => "5", :align => "right")
-                    doc.td(person_result.club_short_name, :width => "220", :align => "left", :nowrap => "")
-                    if person_result.real_or_ak_position
-                      doc.td(!person_result.time.nil? ? person_result.time.strftime("%k:%M:%S") : "", :width => "30", :align => "left")
-                    else
-                      doc.td(person_result.get_position, :width => "30", :align => "left")
+                        points = (@show_points && person_result.rank_value != 0) ? person_result.rank_value.to_s.strip : ""
+                        doc.td(:class => "pts", :nowrap=>"") { doc.text(points.to_s) }
+                        doc.td(:class => "bl") { doc.text("") }
+                      }
                     end
 
-                    doc.td((@show_points && person_result.rank_value != 0) ? person_result.rank_value.to_s : "",
-                           :width => "30", :align => "right")
-                    doc.td()
                   }
-                end
-              }
-              doc.br()
-            end
+                }
+              end
+            }
           }
         }
       end
