@@ -1,6 +1,6 @@
 require_relative "fog_cup"
 
-class FogCupStandardHtmlReportCss
+class FogCupStandardHtmlReport
   attr_accessor :fog_cup
   attr_accessor :external_resources
   attr_accessor :show_detail

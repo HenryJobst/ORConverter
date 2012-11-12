@@ -10,7 +10,7 @@ require_relative "iof_result_list_reader"
 require_relative "points_calculator"
 require_relative "fog_cup"
 require_relative "fog_cup_original_html_report"
-require_relative "fog_cup_standard_html_report_css"
+require_relative "fog_cup_standard_html_report"
 require_relative "standard_html_result_report"
 
 # This hash will hold all of the options
@@ -99,7 +99,7 @@ unless options[:fog_cup].nil?
   if options[:fog_cup] == :original
     FogCupOriginalHtmlReport.new(fog_cup, options[:linked_resources])
   elsif options[:fog_cup] == :standard
-    FogCupStandardHtmlReportCss.new(fog_cup, options[:linked_resources],
+    FogCupStandardHtmlReport.new(fog_cup, options[:linked_resources],
                                     options[:show_points], options[:name1], options[:name2])
   end
 end
