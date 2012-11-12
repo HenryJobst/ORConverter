@@ -35,7 +35,7 @@ optparse = OptionParser.new do |opts|
   # calculate and present fog cup result
   options[:fog_cup] = nil
   opts.on('-f', '--fog-cup [TYPE]', [:original, :standard], 'calculate fog cup results with optional report type (original, standard)') do |t|
-    options[:fog_cup] = t || :standard_css
+    options[:fog_cup] = t || :standard
     @cup_name = "Nebel-Cup #{actual_year}"
   end
 
