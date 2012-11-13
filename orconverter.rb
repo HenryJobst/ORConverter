@@ -5,6 +5,7 @@ require "bundler/setup"
 require "time"
 require "nokogiri"
 require "optparse"
+require "i18n"
 
 require_relative "iof_result_list_reader"
 require_relative "points_calculator"
@@ -12,6 +13,9 @@ require_relative "fog_cup"
 require_relative "fog_cup_original_html_report"
 require_relative "fog_cup_standard_html_report"
 require_relative "standard_html_result_report"
+
+I18n.load_path = Dir.glob("config/locales/*.yml")
+I18n.locale = "de"
 
 # This hash will hold all of the options
 # parsed from the command-line by

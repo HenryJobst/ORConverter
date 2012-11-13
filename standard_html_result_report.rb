@@ -1,3 +1,5 @@
+require "i18n"
+
 class StandardHtmlResultReport
 
   attr_accessor :iof_result_list_reader
@@ -27,7 +29,8 @@ class StandardHtmlResultReport
               doc.table() {
                 doc.tr() {
                   doc.th(:id => "cup_name") { doc.nobr { doc.text("#{@name1 ? @name1 : event.name}") } }
-                  doc.th(:id => "date_time") { doc.nobr { doc.text("#{Time.now.strftime("%d.%m.%Y %H:%M")}") } }
+                  doc.th(:id => "date_time") { doc.nobr {
+                    doc.text("#{I18n.localize(Time.now, :format => :orchead)}") } }
                 }
                 doc.tr() {
                   doc.th(:id => "event_name") { doc.nobr {doc.text("#{name2 ? name2 : "Ergebnisse"}") } }
