@@ -97,11 +97,12 @@ table#class_result td {
     vertical-align: middle;
 }
 
-table#class_result tr.first_invalid_true {
-}
-
 table#class_result tr.realpos_false {
     color: #3b3b3b;
+}
+
+table#class_result tr.first_invalid_true td {
+    padding-top:10px;
 }
 
 table#class_result td.ps {
