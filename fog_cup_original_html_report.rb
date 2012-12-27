@@ -1,4 +1,4 @@
-require_relative "fog_cup"
+require_relative "cupcalculation"
 
 class FogCupOriginalHtmlReport
 

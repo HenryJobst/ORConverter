@@ -1,27 +1,22 @@
 require_relative "cupcalculation"
 
-class FogCupStandardHtmlReport
-  attr_accessor :fog_cup
+class KristallCupOriginalHtmlReport
+  attr_accessor :cup
   attr_accessor :external_resources
   attr_accessor :show_detail
   attr_accessor :name1
   attr_accessor :name2
 
-  def initialize(fog_cup, external_resources, show_points, name1=nil, name2=nil)
-    #puts name1 + ", " + name2
+  def initialize(cup, external_resources, show_points, name1=nil, name2=nil)
     @external_resources = external_resources
-    @fog_cup = fog_cup
+    @cup = cup
     @show_points = show_points
     @name1 = name1
+    @name1 = "Vereinswertung" if @name1.nil?
     @name2 = name2
+    #@name2 = "" if @name2.nil?
+    #puts @name1 + ", " + @name2
     run
-  end
-
-  def run
-    run_event(@fog_cup.cup.cup_final_result, false, "Gesamtwertung")
-    @fog_cup.cup.cup_event_results.each do |event|
-      run_event(event, true)
-    end
   end
 
   def output_cup_event_with_competitors(doc, event_result)
@@ -56,9 +51,15 @@ class FogCupStandardHtmlReport
     end
   end
 
-  def run_event(event, simple, alternate_name2=nil)
+  def build_filename(name1, name2)
+    str = "#{prepare_filename(name1)}"
+    str += "_#{prepare_filename(name2)}" if (!name2.nil? && !name2.empty?)
+    str += ".html"
+  end
 
-    local_name2 = alternate_name2 ? alternate_name2 : @name2
+  def run()
+
+    local_name2 = @name2
 
     builder = Nokogiri::HTML::Builder.new do |doc|
       doc.html {
@@ -70,7 +71,7 @@ class FogCupStandardHtmlReport
           doc.div(:id => "page_header") {
             doc.table() {
               doc.tr() {
-                doc.th(:id => "cup_name") { doc.nobr { doc.text("#{@name1 ? @name1 : event.name}") } }
+                doc.th(:id => "cup_name") { doc.nobr { doc.text("#{@name1 ? @name1 : @cup.cup.cup_final_result.event_name}") } }
                 doc.th(:id => "date_time") {
                   doc.nobr {
                     doc.text("#{I18n.localize(Time.now, :format => :orchead)}")
@@ -85,74 +86,79 @@ class FogCupStandardHtmlReport
           }
 
           doc.div(:id => "club_results") {
-            doc.h2("Ergebnisse:")
+            #doc.h2("")
             doc.table() {
               insert_table_header(doc)
-              insert_table_results(doc,
-                                   sort_club_results(event.club_event_results.values),
-                                   simple, @external_resources)
+              insert_table_results(doc)
             }
-          }
-
-          doc.div(:id => "detailed_results") {
-            if @show_points
-              output_cup_event_with_competitors(doc, event)
-            end
           }
         }
       }
     end
 
-    new_file_name = "#{prepare_filename(@name1)}_#{prepare_filename(local_name2)}.html"
+    new_file_name = build_filename(@name1, local_name2)
     File.open(new_file_name, 'w') do |f|
       f.write builder.to_html
     end
 
   end
 
-  def insert_table_results(doc, club_results, simple, external_resources)
-    place = 0
-    count = 0
-    points = nil
-    club_results.each do |club_result|
-      if (points.nil? || club_result.points < points)
-        count += 1
-        place = count
-        points = club_result.points
-      else
-        count += 1
-      end
-
-      if place > 3 || simple
-        doc.tr() {
-          doc.td(:class=>"pl") { doc.text("%2s." % place) }
-          doc.td(:class=>"cl") { doc.text("#{club_result.club_name}") }
-          doc.td(:class=>"pt") { doc.text("%3s" % club_result.points) }
-        }
-      else
-        doc.tr() {
-          img_link = "./resources/#{place}.jpg"
-          img_link = "http://www.kolv.de/bilder/#{place}.jpg" if external_resources
-          doc.td(:class=>"pl") { doc.img(:src => img_link, :alt=> "Platz %2s." % place) {} }
-          doc.td(:class=>"cl") { doc.strong() { doc.text("#{club_result.club_name}") } }
-          doc.td(:class=>"pt") { doc.strong() { doc.text("%3s" % club_result.points) } }
-        }
-      end
+  def sort_classes(classes)
+    sorted_classes = classes
+    sorted_classes.sort! do |a, b|
+      a <=> b
     end
+    sorted_classes
   end
 
   def insert_table_header(doc)
     doc.tr() {
-      doc.th(:class=>"pl") {
-          doc.text("Platz")
+      doc.th(:class=>"top") {
+          doc.text("Verein/Klassen")
       }
-      doc.th(:class=>"cl") {
-          doc.text("Verein")
+      doc.th(:class=>"sum") {
+          doc.text("Gesamt")
       }
-      doc.th(:class=>"pt") {
-        doc.text("Punkte")
-      }
+
+      sort_classes(@cup.cup.cup_final_result.classes.keys).each do |act_class|
+        doc.th(:class=>"cl") {
+          doc.text(act_class)
+        }
+      end
+
+      @cup.cup.cup_event_results.each do |event|
+        doc.th(:class=>"ev") {
+          doc.text(event.event_name)
+        }
+      end
     }
   end
 
+  def insert_table_results(doc)
+    club_results = sort_club_results(@cup.cup.cup_final_result.club_event_results.values)
+    club_results.each do |club_result|
+      doc.tr() {
+        doc.td(:class=>"cb") { doc.text("#{club_result.club_name}") }
+        doc.td(:class=>"sum") { doc.text("#{club_result.points}") }
+
+        sort_classes(@cup.cup.cup_final_result.classes.keys).each do |act_class|
+          found = false
+          club_result.contributors.values.each do |contributor|
+            if contributor.class == act_class.to_s
+              found = true
+              doc.th(:class => "cl") {
+                doc.text(contributor.points)
+              }
+              break
+            end
+          end
+          if !found
+            doc.th(:class => "cl") {
+              doc.text("")
+            }
+          end
+        end
+      }
+    end
+  end
 end
