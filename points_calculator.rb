@@ -58,6 +58,7 @@ class PointsCalculator
       event.event_classes.each do |event_class|
         clubs = {}
         points = 10
+		last_result = nil
         event_class.results.each do |person_result|
           if event_class.ignore_in_kristall
             person_result.rank_value = 0
@@ -65,10 +66,16 @@ class PointsCalculator
             person_result.rank_value = 0
           else
             next if ignore_club_in_kristall(person_result.get_club_name)
-            next if clubs[person_result.get_club_name.to_sym] # only the fist in club counts
+            next if clubs[person_result.get_club_name.to_sym] # only the first in club counts
             clubs.store(person_result.get_club_name.to_sym, 1)
+			if !last_result.nil? && last_result == person_result.time
+				# same time, same points
+				points += 1
+			end
+			last_result = person_result.time
             person_result.rank_value = points
             points -= 1 if points > 1
+			
           end
         end
       end

@@ -8,7 +8,6 @@ class FogCupStandardHtmlReport
   attr_accessor :name2
 
   def initialize(fog_cup, external_resources, show_points, name1=nil, name2=nil)
-    #puts name1 + ", " + name2
     @external_resources = external_resources
     @fog_cup = fog_cup
     @show_points = show_points
@@ -59,6 +58,7 @@ class FogCupStandardHtmlReport
   def run_event(event, simple, alternate_name2=nil)
 
     local_name2 = alternate_name2 ? alternate_name2 : @name2
+	local_name2 = "" if local_name2.nil?
 
     builder = Nokogiri::HTML::Builder.new do |doc|
       doc.html {
@@ -70,7 +70,7 @@ class FogCupStandardHtmlReport
           doc.div(:id => "page_header") {
             doc.table() {
               doc.tr() {
-                doc.th(:id => "cup_name") { doc.nobr { doc.text("#{@name1 ? @name1 : event.name}") } }
+                doc.th(:id => "cup_name") { doc.nobr { doc.text("#{@name1 ? @name1 : event.event_name}") } }
                 doc.th(:id => "date_time") {
                   doc.nobr {
                     doc.text("#{I18n.localize(Time.now, :format => :orchead)}")
@@ -103,7 +103,7 @@ class FogCupStandardHtmlReport
       }
     end
 
-    new_file_name = "#{prepare_filename(@name1)}_#{prepare_filename(local_name2)}.html"
+    new_file_name = "#{prepare_filename(@name1 ? @name1 : event.event_name)}_#{prepare_filename(local_name2)}.html"
     File.open(new_file_name, 'w') do |f|
       f.write builder.to_html
     end
