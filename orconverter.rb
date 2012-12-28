@@ -74,13 +74,16 @@ optparse = OptionParser.new do |opts|
   options[:name1] = nil
   opts.on('--name1 Name', 'Name 1 (first row) for a report, eg. cup name)') do |n|
     options[:name1] = n
+    puts options[:name1]
   end
+  puts options[:name1] if (options[:verbose] && !options[:name1].nil?)
 
   # report name row 2
   options[:name2] = nil
-  opts.on('--name2 Name', 'Name 2 (second row) for a report, eg. event name)') do |n|
+  opts.on('--name2 Name', 'Name 2 (second row)puts options[:name1] if options[:verbose] && !options[:name1].nil? for a report, eg. event name)') do |n|
     options[:name2] = n
   end
+  puts options[:name2] if (options[:verbose] && !options[:name2].nil?)
 
   # This displays the help screen, all programs are
   # assumed to have this option.

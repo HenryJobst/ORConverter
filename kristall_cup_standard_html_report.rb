@@ -7,15 +7,12 @@ class KristallCupOriginalHtmlReport
   attr_accessor :name1
   attr_accessor :name2
 
-  def initialize(cup, external_resources, show_points, name1=nil, name2=nil)
+  def initialize(cup, external_resources, name1=nil, name2=nil)
     @external_resources = external_resources
     @cup = cup
-    @show_points = show_points
     @name1 = name1
-    @name1 = "Vereinswertung" if @name1.nil?
     @name2 = name2
-    #@name2 = "" if @name2.nil?
-    #puts @name1 + ", " + @name2
+    @name2 = "Vereinswertung" if @name2.nil?
     run
   end
 
@@ -65,7 +62,7 @@ class KristallCupOriginalHtmlReport
       doc.html {
         doc.head() {
           doc.title("#{name1} - #{local_name2}")
-          doc.link(:rel => "stylesheet", :type => "text/css", :href => "cup_printout.css")
+          doc.link(:rel => "stylesheet", :type => "text/css", :href => "kcup_printout.css")
         }
         doc.body() {
           doc.div(:id => "page_header") {
@@ -146,18 +143,37 @@ class KristallCupOriginalHtmlReport
           club_result.contributors.values.each do |contributor|
             if contributor.class == act_class.to_s
               found = true
-              doc.th(:class => "cl") {
+              doc.td(:class => "cl") {
                 doc.text(contributor.points)
               }
               break
             end
           end
           if !found
-            doc.th(:class => "cl") {
+            doc.td(:class => "cl") {
               doc.text("")
             }
           end
         end
+
+        @cup.cup.cup_event_results.each do |event|
+          found = false
+          event.club_event_results.values.each do |club|
+            if club.club_name == club_result.club_name
+              doc.td(:class => "ev") {
+                doc.text(club.points)
+              }
+              found = true
+              break
+            end
+          end
+          if !found
+            doc.td(:class => "ev") {
+              doc.text("")
+            }
+          end
+        end
+
       }
     end
   end

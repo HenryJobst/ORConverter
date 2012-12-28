@@ -12,6 +12,7 @@ class StandardHtmlResultReport
     @show_points = show_points
     @name1 = name1
     @name2 = name2
+    @name2 = "Ergebnisse" if @name2.nil?
     run
   end
 
