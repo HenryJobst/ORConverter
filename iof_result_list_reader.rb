@@ -53,15 +53,17 @@ class IofResultListReader
     @events = Array.new
 
     filenames.each do |filename|
-      parse_xml_file(filename)
+      parts = filename.split(/#/)
+      file_title = parts.size > 1 ? parts[1] : nil
+      parse_xml_file(parts[0], file_title)
     end
 
     sort_by_position
 
   end
 
-  def parse_xml_file(filename)
-    puts "\nProcess file: #{filename}"
+  def parse_xml_file(filename, file_title)
+    puts "\nProcess file: #{filename} - #{file_title}"
 
     doc = Nokogiri::XML(IO.read(filename))
 
@@ -76,7 +78,7 @@ class IofResultListReader
 
     event = Event.new
     event.event_classes = Array.new
-    event.name = nil
+    event.name = file_title.nil? ? nil : file_title
     @events.push(event)
 
     root_node.children.each do |child|

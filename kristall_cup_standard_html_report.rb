@@ -93,7 +93,7 @@ class KristallCupOriginalHtmlReport
       }
     end
 
-    new_file_name = build_filename(@name1, local_name2)
+    new_file_name = build_filename(@cup.cup.cup_name, local_name2)
     File.open(new_file_name, 'w') do |f|
       f.write builder.to_html
     end

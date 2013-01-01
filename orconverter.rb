@@ -41,14 +41,14 @@ optparse = OptionParser.new do |opts|
   options[:fog_cup] = nil
   opts.on('-f', '--fog-cup [TYPE]', [:original, :standard], 'calculate fog cup results with optional report type (original, standard)') do |t|
     options[:fog_cup] = t || :standard
-    @cup_name = "Nebel-Cup #{actual_year}"
+    options[:cup_name] = "Nebel-Cup #{actual_year}"
   end
 
   # calculate and present kristall cup result
   options[:kristall_cup] = nil
   opts.on('-k', '--kristall-cup [TYPE]', [:original, :standard], 'calculate kristall cup results with optional report type (original, standard)') do |t|
     options[:kristall_cup] = t || :original
-    @cup_name = "Kristall-Cup #{actual_year}"
+    options[:cup_name] = "Kristall-Cup #{actual_year}"
   end
 
   options[:linked_resources] = false
@@ -70,17 +70,23 @@ optparse = OptionParser.new do |opts|
     options[:verbose] = true
   end
 
+  # report name for the cup report
+  options[:cup_name] = nil
+  opts.on('--cup-name name', 'Cup name') do |n|
+    options[:cup_name] = n
+  end
+  puts options[:cup_name] if (options[:verbose] && !options[:cup_name].nil?)
+
   # report name row 1
   options[:name1] = nil
-  opts.on('--name1 Name', 'Name 1 (first row) for a report, eg. cup name)') do |n|
+  opts.on('--name1 name', 'Name 1 (first row) for a report, eg. event name)') do |n|
     options[:name1] = n
-    puts options[:name1]
   end
   puts options[:name1] if (options[:verbose] && !options[:name1].nil?)
 
   # report name row 2
   options[:name2] = nil
-  opts.on('--name2 Name', 'Name 2 (second row)puts options[:name1] if options[:verbose] && !options[:name1].nil? for a report, eg. event name)') do |n|
+  opts.on('--name2 Name', 'Name 2 (second row) for a report, eg. report name)') do |n|
     options[:name2] = n
   end
   puts options[:name2] if (options[:verbose] && !options[:name2].nil?)
@@ -110,7 +116,8 @@ StandardHtmlResultReport.new(iof_result_list_reader, options[:show_points], opti
 
 unless options[:fog_cup].nil?
   puts "Process fog cup ..."
-  cup = CupCalculation.new(@cup_name, actual_year, iof_result_list_reader.events,options[:verbose], options[:rank_mode])
+  cup = CupCalculation.new(options[:cup_name],
+                           actual_year, iof_result_list_reader.events,options[:verbose], options[:rank_mode])
   if options[:fog_cup] == :original
     FogCupOriginalHtmlReport.new(cup, options[:linked_resources])
   elsif options[:fog_cup] == :standard
@@ -121,7 +128,8 @@ end
 
 unless options[:kristall_cup].nil?
   puts "Process kristall cup ..."
-  cup = CupCalculation.new(@cup_name, actual_year, iof_result_list_reader.events, options[:verbose], options[:rank_mode])
+  cup = CupCalculation.new(options[:cup_name],
+                           actual_year, iof_result_list_reader.events, options[:verbose], options[:rank_mode])
   if options[:kristall_cup] == :original
     KristallCupOriginalHtmlReport.new(cup, options[:linked_resources], options[:name1], options[:name2])
   end
