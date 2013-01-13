@@ -11,7 +11,7 @@ class CupContributor
   end
   
   def full_name_with_class
-    "# #{@class} {@given_name} #{@family_name}"
+    "# #{@class} #{@given_name} #{@family_name}"
   end
   
   def to_s
