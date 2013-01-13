@@ -10,6 +10,10 @@ class CupContributor
     "#{@given_name} #{@family_name}"
   end
   
+  def full_name_with_class
+    "# #{@class} {@given_name} #{@family_name}"
+  end
+  
   def to_s
     "#{@class} - #{@given_name} #{@family_name} : #{@points}"
   end
@@ -149,7 +153,7 @@ class CupCalculation
         end
 
         club_result.contributors.values.each do |contributor|
-          final_contributor = club_final_result.contributors[contributor.full_name.to_sym]
+          final_contributor = club_final_result.contributors[contributor.full_name_with_class.to_sym]
           if final_contributor.nil?
             # add contributor
             final_contributor = CupContributor.new
@@ -157,7 +161,7 @@ class CupCalculation
             final_contributor.family_name = contributor.family_name
             final_contributor.class = contributor.class
             final_contributor.points = contributor.points
-            club_final_result.contributors.store(contributor.full_name.to_sym, final_contributor)
+            club_final_result.contributors.store(contributor.full_name_with_class.to_sym, final_contributor)
           else
             final_contributor.points += contributor.points
           end
@@ -166,7 +170,7 @@ class CupCalculation
     end
   end
 
-  def simple_output_cup_event(event_result, with_class)
+  def simple_output_cup_event(event_result)
     puts "\n---------------------------------------"
     puts "Event name: #{event_result.event_name}"
     puts "\n"
@@ -178,25 +182,20 @@ class CupCalculation
       puts "\n#{club_result.club_name} -> #{club_result.points}"
       puts "\n"
       contributors = club_result.contributors.values.sort do |a, b|
-        [-a.points.to_i, a.full_name.to_s] <=> [-b.points.to_i, b.full_name.to_s]
+        [-a.points.to_i, a.full_name.to_s, a.class.to_s] <=> [-b.points.to_i, b.full_name.to_s, b.class.to_s]
       end
       contributors.each do |contributor|
-        if with_class
           printf " %8s %s %d\n" % [contributor.class.to_s,
                                    contributor.full_name,
                                    contributor.points.to_i]
-        else
-          printf " %s %d\n" % [contributor.full_name,
-                               contributor.points.to_i]
-        end
       end
     end
   end
 
   def simple_output_cup
     cup.cup_event_results.each do |event_result|
-      simple_output_cup_event(event_result, true)
+      simple_output_cup_event(event_result)
     end
-    simple_output_cup_event(cup.cup_final_result, false)
+    simple_output_cup_event(cup.cup_final_result)
   end
 end
