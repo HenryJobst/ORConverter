@@ -7,7 +7,11 @@ class CupContributor
   attr_accessor :points
 
   def full_name
-    "#{given_name} #{family_name}"
+    "#{@given_name} #{@family_name}"
+  end
+  
+  def to_s
+    "#{@class} - #{@given_name} #{@family_name} : #{@points}"
   end
 
 end

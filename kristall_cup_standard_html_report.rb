@@ -56,19 +56,20 @@ class KristallCupOriginalHtmlReport
 
   def run()
 
-    local_name2 = @name2
+    local_name2 = @name2	
+	local_name2 = local_name2 ? local_name2 : "Ergebnisse"
 
     builder = Nokogiri::HTML::Builder.new do |doc|
       doc.html {
         doc.head() {
-          doc.title("#{name1} - #{local_name2}")
+          doc.title("#{@cup.cup.cup_name} - #{local_name2}")
           doc.link(:rel => "stylesheet", :type => "text/css", :href => "kcup_printout.css")
         }
         doc.body() {
           doc.div(:id => "page_header") {
             doc.table() {
               doc.tr() {
-                doc.th(:id => "cup_name") { doc.nobr { doc.text("#{@name1 ? @name1 : @cup.cup.cup_final_result.event_name}") } }
+                doc.th(:id => "cup_name") { doc.nobr { doc.text("#{@cup.cup.cup_name}") } }
                 doc.th(:id => "date_time") {
                   doc.nobr {
                     doc.text("#{I18n.localize(Time.now, :format => :orchead)}")
@@ -76,7 +77,7 @@ class KristallCupOriginalHtmlReport
                 }
               }
               doc.tr() {
-                doc.th(:id => "event_name") { doc.nobr {doc.text("#{local_name2 ? local_name2 : "Ergebnisse"}") } }
+                doc.th(:id => "event_name") { doc.nobr {doc.text("#{local_name2}") } }
                 doc.th(:id => "creation_text") { doc.nobr { doc.text("erzeugt mit OR-Converter von Henry Jobst") } }
               }
             }
@@ -139,17 +140,17 @@ class KristallCupOriginalHtmlReport
         doc.td(:class=>"sum") { doc.text("#{club_result.points}") }
 
         sort_classes(@cup.cup.cup_final_result.classes.keys).each do |act_class|
-          found = false
+          points = 0
           club_result.contributors.values.each do |contributor|
             if contributor.class == act_class.to_s
-              found = true
-              doc.td(:class => "cl") {
-                doc.text(contributor.points)
-              }
-              break
+              points += contributor.points
             end
           end
-          if !found
+          if points > 0
+			doc.td(:class => "cl") {
+              doc.text(points)
+            }
+		  else
             doc.td(:class => "cl") {
               doc.text("")
             }
