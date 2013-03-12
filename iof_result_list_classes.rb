@@ -17,7 +17,11 @@ class PersonResult
   end
 
   def full_name
-    "#{given_name} #{family_name}"
+	fname = family_name
+	if fname =~ /^\w+$/
+		fname.capitalize!
+	end
+	"#{given_name} #{fname}"
   end
 
   def get_position
@@ -92,7 +96,7 @@ class EventClass
   attr_accessor :control_count
 
   def ignore_in_nor
-    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim"
+    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trim" || name == "Beginner Kurz" || name == "Beginner Lang"
   end
 
   def ignore_in_nebel
