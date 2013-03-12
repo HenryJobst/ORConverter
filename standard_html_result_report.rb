@@ -12,6 +12,7 @@ class StandardHtmlResultReport
     @show_points = show_points
     @name1 = name1
     @name2 = name2
+    @name2 = "Ergebnisse" if @name2.nil?
     run
   end
 
@@ -21,7 +22,7 @@ class StandardHtmlResultReport
       builder = Nokogiri::HTML::Builder.new do |doc|
         doc.html {
           doc.head() {
-            doc.title("#{name1} - #{name2}")
+            doc.title("#{@name1 ? @name1 : event.name} - #{name2 ? name2 : "Ergebnisse"}")
             doc.link(:rel => "stylesheet", :type => "text/css", :href => "printout.css")
           }
           doc.body() {

@@ -9,9 +9,10 @@ require "i18n"
 
 require_relative "iof_result_list_reader"
 require_relative "points_calculator"
-require_relative "fog_cup"
+require_relative "cupcalculation"
 require_relative "fog_cup_original_html_report"
 require_relative "fog_cup_standard_html_report"
+require_relative "kristall_cup_standard_html_report"
 require_relative "standard_html_result_report"
 
 I18n.load_path = Dir.glob("config/locales/*.yml")
@@ -40,7 +41,14 @@ optparse = OptionParser.new do |opts|
   options[:fog_cup] = nil
   opts.on('-f', '--fog-cup [TYPE]', [:original, :standard], 'calculate fog cup results with optional report type (original, standard)') do |t|
     options[:fog_cup] = t || :standard
-    @cup_name = "Nebel-Cup #{actual_year}"
+    options[:cup_name] = "Nebel-Cup #{actual_year}"
+  end
+
+  # calculate and present kristall cup result
+  options[:kristall_cup] = nil
+  opts.on('-k', '--kristall-cup [TYPE]', [:original, :standard], 'calculate kristall cup results with optional report type (original, standard)') do |t|
+    options[:kristall_cup] = t || :original
+    options[:cup_name] = "Kristall-Cup #{actual_year}"
   end
 
   options[:linked_resources] = false
@@ -62,17 +70,26 @@ optparse = OptionParser.new do |opts|
     options[:verbose] = true
   end
 
+  # report name for the cup report
+  options[:cup_name] = nil
+  opts.on('--cup-name name', 'Cup name') do |n|
+    options[:cup_name] = n
+  end
+  puts options[:cup_name] if (options[:verbose] && !options[:cup_name].nil?)
+
   # report name row 1
   options[:name1] = nil
-  opts.on('--name1 Name', 'Name 1 (first row) for a report, eg. cup name)') do |n|
+  opts.on('--name1 name', 'Name 1 (first row) for a report, eg. event name)') do |n|
     options[:name1] = n
   end
+  puts options[:name1] if (options[:verbose] && !options[:name1].nil?)
 
   # report name row 2
   options[:name2] = nil
-  opts.on('--name2 Name', 'Name 2 (second row) for a report, eg. event name)') do |n|
+  opts.on('--name2 Name', 'Name 2 (second row) for a report, eg. report name)') do |n|
     options[:name2] = n
   end
+  puts options[:name2] if (options[:verbose] && !options[:name2].nil?)
 
   # This displays the help screen, all programs are
   # assumed to have this option.
@@ -98,12 +115,22 @@ iof_result_list_reader.simple_output(options[:show_points]) if options[:verbose]
 StandardHtmlResultReport.new(iof_result_list_reader, options[:show_points], options[:name1], options[:name2])
 
 unless options[:fog_cup].nil?
-  fog_cup = FogCup.new(@cup_name, actual_year, iof_result_list_reader.events,
-                       options[:verbose])
+  puts "Process fog cup ..."
+  cup = CupCalculation.new(options[:cup_name],
+                           actual_year, iof_result_list_reader.events,options[:verbose], options[:rank_mode])
   if options[:fog_cup] == :original
-    FogCupOriginalHtmlReport.new(fog_cup, options[:linked_resources])
+    FogCupOriginalHtmlReport.new(cup, options[:linked_resources])
   elsif options[:fog_cup] == :standard
-    FogCupStandardHtmlReport.new(fog_cup, options[:linked_resources],
-                                    options[:show_points], options[:name1], options[:name2])
+    FogCupStandardHtmlReport.new(cup, options[:linked_resources],
+                                 options[:show_points], options[:name1], options[:name2])
+  end
+end
+
+unless options[:kristall_cup].nil?
+  puts "Process kristall cup ..."
+  cup = CupCalculation.new(options[:cup_name],
+                           actual_year, iof_result_list_reader.events, options[:verbose], options[:rank_mode])
+  if options[:kristall_cup] == :original
+    KristallCupOriginalHtmlReport.new(cup, options[:linked_resources], options[:name1], options[:name2])
   end
 end

@@ -107,6 +107,11 @@ class EventClass
     return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trimm" || name == "H-10" || name == "D-10"
   end
 
+  def ignore_in_rank_mode(rank_mode)
+    ignore_in_nor if rank_mode == :nor
+    ignore_in_nebel if rank_mode == :nebel
+    ignore_in_kristall if rank_mode == :kristall
+  end
 end
 
 class Event
