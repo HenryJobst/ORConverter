@@ -104,7 +104,7 @@ class EventClass
   end
 
   def ignore_in_kristall
-    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trimm" || name == "H-10" || name == "D-10"
+    return true if name == "BK" ||  name == "Beg" || name == "BL" || name == "Trimm"
   end
 
   def ignore_in_rank_mode(rank_mode)
