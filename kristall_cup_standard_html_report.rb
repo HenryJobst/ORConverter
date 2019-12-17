@@ -58,23 +58,26 @@ class KristallCupOriginalHtmlReport
 
   def run()
 
+		style_text = ""
+    if @inline_css 
+		  File.open("kcup_printout.css").each_line do |line|
+        style_text += line
+      end
+    end
     local_name2 = @name2	
-	local_name2 = local_name2 ? local_name2 : "Ergebnisse"
+	  local_name2 = local_name2 ? local_name2 : "Ergebnisse"
 
     builder = Nokogiri::HTML::Builder.new do |doc|
       doc.html {
         doc.head() {
           doc.title("#{@cup.cup.cup_name} - #{local_name2}")
-          if @inline_css {
-		        style_text = ""
-		        File.open(kcup_printout.css).each_line do |line|
-    		      style_text += line
-		        end
-	    	    doc.style(:type => "text/css") { doc.text("#{style_text}") }
-          }
-          else { 
+          if @inline_css
+            doc.style(:type => "text/css") { 
+              doc.text("#{style_text}") 
+            }
+          else  
             doc.link(:rel => "stylesheet", :type => "text/css", :href => "kcup_printout.css")
-          }
+          end
         }
         doc.body() {
           doc.div(:id => "page_header") {
