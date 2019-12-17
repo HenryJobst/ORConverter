@@ -56,6 +56,10 @@ optparse = OptionParser.new do |opts|
     options[:linked_resources] = true
   end
 
+  options[:inline_css] = false
+  opts.on('-i', '--inline-css', 'use inline css instead of external css style file') do
+    options[:inline_css] = true
+  end
 
   # Show of points in reports
   options[:show_points] = true
@@ -131,6 +135,6 @@ unless options[:kristall_cup].nil?
   cup = CupCalculation.new(options[:cup_name],
                            actual_year, iof_result_list_reader.events, options[:verbose], options[:rank_mode])
   if options[:kristall_cup] == :original
-    KristallCupOriginalHtmlReport.new(cup, options[:linked_resources], options[:name1], options[:name2])
+    KristallCupOriginalHtmlReport.new(cup, options[:linked_resources], options[:name1], options[:name2], options[:inline_css])
   end
 end

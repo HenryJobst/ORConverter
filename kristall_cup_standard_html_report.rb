@@ -6,12 +6,14 @@ class KristallCupOriginalHtmlReport
   attr_accessor :show_detail
   attr_accessor :name1
   attr_accessor :name2
+  attr_accessor :inline_css
 
-  def initialize(cup, external_resources, name1=nil, name2=nil)
+  def initialize(cup, external_resources, name1=nil, name2=nil, inline_css=nil)
     @external_resources = external_resources
     @cup = cup
     @name1 = name1
     @name2 = name2
+    @inline_css = inline_css
     @name2 = "Vereinswertung" if @name2.nil?
     run
   end
@@ -63,7 +65,16 @@ class KristallCupOriginalHtmlReport
       doc.html {
         doc.head() {
           doc.title("#{@cup.cup.cup_name} - #{local_name2}")
-          doc.link(:rel => "stylesheet", :type => "text/css", :href => "kcup_printout.css")
+          if @inline_css {
+		        style_text = ""
+		        File.open(kcup_printout.css).each_line do |line|
+    		      style_text += line
+		        end
+	    	    doc.style(:type => "text/css") { doc.text("#{style_text}") }
+          }
+          else { 
+            doc.link(:rel => "stylesheet", :type => "text/css", :href => "kcup_printout.css")
+          }
         }
         doc.body() {
           doc.div(:id => "page_header") {
