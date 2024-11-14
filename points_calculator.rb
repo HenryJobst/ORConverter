@@ -101,6 +101,7 @@ class PointsCalculator
           event_class.results.each do |person_result|
             next if (person_result.time.nil?)
             next if (person_result.position.nil?)
+            next if ignore_club_in_nebel(person_result.get_club_name)
             if event_class.best_time.nil? || event_class.best_time > person_result.time
               event_class.best_time = person_result.time
             end
