@@ -37,13 +37,21 @@ jobs:
         shell: bash
         run: |
           if [ -f orconverter.rb ]; then
-            ocra orconverter.rb --no-autoload --gem-all --dll fiber.so
+            if gem contents fiber > /dev/null 2>&1; then
+              fiber_path=$(gem contents fiber | grep fiber.so)
+              ocra orconverter.rb --no-autoload --gem-all --dll "$fiber_path"
+            else
+              echo "fiber.so not found. Installing the 'fiber' gem..."
+              gem install fiber
+              fiber_path=$(gem contents fiber | grep fiber.so)
+              ocra orconverter.rb --no-autoload --gem-all --dll "$fiber_path"
+            fi
           else
             echo "Script 'orconverter.rb' not found. Please check the file path."
             exit 1
           fi
 
-      # Optional: Upload the binary as an artifact
+      # Upload the binary as an artifact
       - name: Upload Binary
         uses: actions/upload-artifact@v4
         with:
