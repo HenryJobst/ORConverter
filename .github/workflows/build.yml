@@ -14,6 +14,8 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 'head'
+      - name: Install dependencies
+        run: bundle install
       - name: Install ocra
         run: gem install ocra
       - name: Build Binary
