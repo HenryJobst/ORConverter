@@ -1,0 +1,20 @@
+name: Build Windows Binary
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+      - name: Install ocra
+        run: gem install ocra
+      - name: Build Binary
+        run: ocra orconverter.rb --no-autoload --gem-full=i18n
