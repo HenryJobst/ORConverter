@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           if [ -f orconverter.rb ]; then
-            ocra orconverter.rb --no-autoload --gem-full=i18n
+            ocra orconverter.rb -no-autoload --gem-all --dll fiber.so
           else
             echo "Script 'orconverter.rb' not found. Please check the file path."
             exit 1
