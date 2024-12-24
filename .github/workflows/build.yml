@@ -45,12 +45,12 @@ jobs:
       # Create a Release
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: comnoco/create-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v1.0.0
-          release_name: "ORConverter v1.0.0"
+          tag_name: v1.0.1
+          release_name: "ORConverter v1.0.1"
           draft: false
           prerelease: false
 
