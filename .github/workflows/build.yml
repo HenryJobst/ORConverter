@@ -20,6 +20,7 @@ jobs:
 
       # Install dependencies defined in Gemfile
       - name: Install dependencies
+        shell: bash
         run: |
           if [ -f Gemfile ]; then
             bundle install
@@ -33,6 +34,7 @@ jobs:
 
       # Build the binary using ocra
       - name: Build Binary
+        shell: bash
         run: |
           if [ -f orconverter.rb ]; then
             ocra orconverter.rb --no-autoload --gem-full=i18n
