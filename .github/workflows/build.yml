@@ -28,21 +28,15 @@ jobs:
             echo "No Gemfile found, skipping bundle install."
           fi
 
-      - name: Install ocra & fiber
-        run: gem install ocra fiber
+      - name: Install ocran
+        run: gem install ocran
 
       # Build the binary using ocra
       - name: Build Binary
         shell: bash
         run: |
           if [ -f orconverter.rb ]; then
-            if gem contents fiber > /dev/null 2>&1; then
-              fiber_path=$(gem contents fiber | grep fiber.so)
-              ocra orconverter.rb --no-autoload --gem-all --dll "$fiber_path"
-            else
-              echo "fiber.so not found."
-              exit 1
-            fi
+              ocran orconverter.rb --no-autoload --gem-full=i18n
           else
             echo "Script 'orconverter.rb' not found. Please check the file path."
             exit 1
