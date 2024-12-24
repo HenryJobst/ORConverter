@@ -42,10 +42,26 @@ jobs:
             exit 1
           fi
 
-      # Upload the binary as an artifact
-      - name: Upload Binary
-        uses: actions/upload-artifact@v4
+      # Create a Release
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: ORConverter
-          path: ./orconverter.exe
+          tag_name: v1.0.0
+          release_name: "ORConverter v1.0.0"
+          draft: false
+          prerelease: false
+
+      # Upload Binary to the Release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./orconverter.exe
+          asset_name: orconverter.exe
+          asset_content_type: application/octet-stream
 
