@@ -1,6 +1,7 @@
 require_relative "iof_result_list_classes"
 
 require 'tzinfo'
+require 'tzinfo/data'
 
 # @param [Time] base_time
 # @param [Float] factor
