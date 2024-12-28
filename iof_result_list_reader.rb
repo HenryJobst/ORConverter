@@ -3,6 +3,8 @@ require_relative "iof_result_list_classes"
 require 'tzinfo'
 require 'tzinfo/data'
 
+TZInfo::DataSource.set(:ruby)
+
 # @param [Time] base_time
 # @param [Float] factor
 # @return [Time]
